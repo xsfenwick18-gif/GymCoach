@@ -46,6 +46,32 @@
     text-transform:uppercase;
     color:var(--text-muted);
   }
+  .day-picker{
+    margin-top:14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .day-picker label{
+    font-family:'Oswald',sans-serif;
+    font-size:12px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .day-picker select{
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:'Oswald',sans-serif;
+    font-size:14px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    padding:8px 12px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .day-picker select:focus{outline:none; border-color:var(--accent);}
   main{max-width:640px; margin:0 auto; padding:20px 16px;}
   .rest-day{
     text-align:center;
@@ -243,6 +269,16 @@
 <header>
   <div class="wordmark">PLATE<span>STACK</span></div>
   <div class="day-label" id="dayLabel">Loading...</div>
+  <div class="day-picker">
+    <label for="daySelect">Vandag is:</label>
+    <select id="daySelect">
+      <option value="Upper A">Upper A — Tuesday</option>
+      <option value="Lower A">Lower A — Wednesday</option>
+      <option value="Upper B">Upper B — Thursday</option>
+      <option value="Lower B">Lower B — Friday</option>
+      <option value="Rest">Rest Day</option>
+    </select>
+  </div>
 </header>
 
 <main id="main">
@@ -292,7 +328,7 @@ const REST_SMALL = 75;  // 1.25 min
 const DAY_MAP = { 2: "Upper A", 3: "Lower A", 4: "Upper B", 5: "Lower B" };
 
 function todayDay(){
-  return DAY_MAP[new Date().getDay()] || null;
+  return DAY_MAP[new Date().getDay()] || "Rest";
 }
 function todayDate(){
   return new Date().toISOString().slice(0,10);
@@ -300,10 +336,22 @@ function todayDate(){
 
 let currentDay = todayDay();
 
+// Set the dropdown to today's auto-detected day on first load —
+// still fully editable, this is just a starting guess, not a lock.
+const daySelect = document.getElementById('daySelect');
+daySelect.value = currentDay;
+daySelect.addEventListener('change', () => {
+  currentDay = daySelect.value;
+  document.getElementById('exerciseList').innerHTML = '';
+  document.getElementById('restDayMsg').style.display = 'none';
+  document.getElementById('finishSection').style.display = 'none';
+  loadWorkout();
+});
+
 async function loadWorkout(){
   const dayLabel = document.getElementById('dayLabel');
-  if(!currentDay){
-    dayLabel.textContent = "—";
+  if(currentDay === "Rest"){
+    dayLabel.textContent = "REST DAY";
     document.getElementById('restDayMsg').style.display = 'block';
     return;
   }
