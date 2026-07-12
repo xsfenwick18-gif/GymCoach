@@ -262,6 +262,104 @@
     font-size:14px;
   }
   .next-up b{color:var(--text); font-family:'Oswald',sans-serif; letter-spacing:0.5px;}
+
+  /* Nav tabs */
+  .nav-tabs{
+    display:flex;
+    gap:4px;
+    margin-top:18px;
+    border-bottom:1px solid var(--border);
+  }
+  .nav-tab{
+    background:none;
+    border:none;
+    color:var(--text-muted);
+    font-family:'Oswald',sans-serif;
+    font-size:13px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:10px 4px 12px;
+    margin-right:20px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .nav-tab.active{color:var(--text); border-bottom-color:var(--accent);}
+
+  /* Progress section */
+  .metrics-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px;
+    margin-bottom:20px;
+  }
+  .metrics-card h3{
+    font-family:'Oswald',sans-serif;
+    font-size:14px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:12px;
+  }
+  .metrics-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .metrics-grid .full{grid-column:1 / -1;}
+  .metrics-grid label{
+    display:block;
+    font-size:11px;
+    color:var(--text-muted);
+    margin-bottom:4px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .metrics-grid input{
+    width:100%;
+    background:var(--surface-raised);
+    border:1px solid var(--border);
+    border-radius:6px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    padding:8px 10px;
+  }
+  .metrics-grid input:focus{outline:none; border-color:var(--accent);}
+  .metrics-save{
+    width:100%;
+    background:var(--accent);
+    border:none;
+    border-radius:6px;
+    color:var(--bg);
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    font-size:13px;
+    padding:11px;
+    cursor:pointer;
+  }
+  .chart-select{
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:'Oswald',sans-serif;
+    font-size:13px;
+    text-transform:uppercase;
+    padding:8px 12px;
+    border-radius:6px;
+    margin-bottom:10px;
+    width:100%;
+  }
+  canvas{width:100%; height:auto; display:block;}
+  .empty-chart{
+    color:var(--text-muted);
+    font-size:13px;
+    text-align:center;
+    padding:30px 0;
+  }
 </style>
 </head>
 <body>
@@ -279,19 +377,53 @@
       <option value="Rest">Rest Day</option>
     </select>
   </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tabWorkout">Workout</button>
+    <button class="nav-tab" id="tabProgress">Progress</button>
+  </div>
 </header>
 
 <main id="main">
-  <div class="rest-day" id="restDayMsg" style="display:none">
-    <div class="big">Rest Day</div>
-    <div>No session scheduled today. Recovery is part of the program too.</div>
-  </div>
-  <div id="exerciseList"></div>
+  <div id="workoutView">
+    <div class="rest-day" id="restDayMsg" style="display:none">
+      <div class="big">Rest Day</div>
+      <div>No session scheduled today. Recovery is part of the program too.</div>
+    </div>
+    <div id="exerciseList"></div>
 
-  <div class="finish-section" id="finishSection" style="display:none">
-    <label>Session Notes</label>
-    <textarea id="sessionNotes" placeholder="How did it feel? Anything to fix next time?"></textarea>
-    <button class="finish-btn" id="finishBtn">Finish Workout</button>
+    <div class="finish-section" id="finishSection" style="display:none">
+      <label>Session Notes</label>
+      <textarea id="sessionNotes" placeholder="How did it feel? Anything to fix next time?"></textarea>
+      <button class="finish-btn" id="finishBtn">Finish Workout</button>
+    </div>
+  </div>
+
+  <div id="progressView" style="display:none">
+    <div class="metrics-card">
+      <h3>Log Body Metrics</h3>
+      <div class="metrics-grid">
+        <div class="full">
+          <label>Body Weight (kg)</label>
+          <input type="number" id="mWeight" inputmode="decimal" placeholder="71.0">
+        </div>
+        <div><label>Chest (cm)</label><input type="number" id="mChest" inputmode="decimal"></div>
+        <div><label>Waist (cm)</label><input type="number" id="mWaist" inputmode="decimal"></div>
+        <div><label>Arms (cm)</label><input type="number" id="mArms" inputmode="decimal"></div>
+        <div><label>Legs (cm)</label><input type="number" id="mLegs" inputmode="decimal"></div>
+      </div>
+      <button class="metrics-save" id="saveMetricsBtn">Save Today's Metrics</button>
+    </div>
+
+    <div class="metrics-card">
+      <h3>Body Weight Over Time</h3>
+      <canvas id="weightChart" width="600" height="220"></canvas>
+    </div>
+
+    <div class="metrics-card">
+      <h3>Lift Progress</h3>
+      <select class="chart-select" id="exerciseChartSelect"></select>
+      <canvas id="liftChart" width="600" height="220"></canvas>
+    </div>
   </div>
 </main>
 
@@ -492,6 +624,152 @@ document.getElementById('finishBtn').addEventListener('click', async () => {
 });
 
 loadWorkout();
+
+// ==== Tab switching ====
+const ALL_EXERCISES = [
+  "Smith flat bench press", "Lat pulldown", "Seated DB shoulder press", "DB row",
+  "Preacher curl", "Tricep pushdown", "Hex bar deadlift", "Smith squat",
+  "Leg extension", "Leg curl", "Calf raise", "Smith incline press",
+  "Low cable seated row", "Dips", "Face pulls", "Cable lateral raise",
+  "DB hammer curl", "Hex bar Romanian deadlift"
+];
+
+const tabWorkout = document.getElementById('tabWorkout');
+const tabProgress = document.getElementById('tabProgress');
+const workoutView = document.getElementById('workoutView');
+const progressView = document.getElementById('progressView');
+
+tabWorkout.addEventListener('click', () => {
+  tabWorkout.classList.add('active');
+  tabProgress.classList.remove('active');
+  workoutView.style.display = 'block';
+  progressView.style.display = 'none';
+});
+
+tabProgress.addEventListener('click', () => {
+  tabProgress.classList.add('active');
+  tabWorkout.classList.remove('active');
+  progressView.style.display = 'block';
+  workoutView.style.display = 'none';
+  loadProgressView();
+});
+
+function loadProgressView(){
+  const select = document.getElementById('exerciseChartSelect');
+  if(select.options.length === 0){
+    ALL_EXERCISES.forEach(ex => {
+      const opt = document.createElement('option');
+      opt.value = ex; opt.textContent = ex;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', () => loadLiftChart(select.value));
+  }
+  loadWeightChart();
+  loadLiftChart(select.value);
+}
+
+// ==== Save body metrics ====
+document.getElementById('saveMetricsBtn').addEventListener('click', async () => {
+  const weight = document.getElementById('mWeight').value;
+  const chest = document.getElementById('mChest').value;
+  const waist = document.getElementById('mWaist').value;
+  const arms = document.getElementById('mArms').value;
+  const legs = document.getElementById('mLegs').value;
+
+  if(!weight && !chest && !waist && !arms && !legs){
+    flashToast("Enter at least one measurement");
+    return;
+  }
+
+  await fetch(API_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain'},
+    body: JSON.stringify({
+      type: 'bodymetric',
+      date: todayDate(),
+      weight, chest, waist, arms, legs
+    })
+  });
+
+  flashToast("Metrics saved");
+  ['mWeight','mChest','mWaist','mArms','mLegs'].forEach(id => document.getElementById(id).value = '');
+  loadWeightChart();
+});
+
+// ==== Charts ====
+async function loadWeightChart(){
+  const res = await fetch(`${API_URL}?action=bodymetrics`);
+  const data = await res.json();
+  const points = data.filter(d => d.weight !== '' && d.weight !== null)
+    .map(d => ({ date: d.date, value: Number(d.weight) }));
+  drawLineChart('weightChart', points, 'kg');
+}
+
+async function loadLiftChart(exerciseName){
+  if(!exerciseName) return;
+  const res = await fetch(`${API_URL}?action=exercisehistory&exercise=${encodeURIComponent(exerciseName)}`);
+  const data = await res.json();
+  const points = data.map(d => ({ date: d.date, value: Number(d.topWeight) }));
+  drawLineChart('liftChart', points, 'kg');
+}
+
+function drawLineChart(canvasId, points, unit){
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  if(points.length < 2){
+    ctx.fillStyle = '#8B909A';
+    ctx.font = '13px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText('Log a few sessions to see progress here', w/2, h/2);
+    return;
+  }
+
+  const pad = {top:20, right:20, bottom:30, left:44};
+  const values = points.map(p => p.value);
+  const minV = Math.min(...values) * 0.95;
+  const maxV = Math.max(...values) * 1.05;
+  const plotW = w - pad.left - pad.right;
+  const plotH = h - pad.top - pad.bottom;
+
+  const xFor = i => pad.left + (i / (points.length - 1)) * plotW;
+  const yFor = v => pad.top + plotH - ((v - minV) / (maxV - minV || 1)) * plotH;
+
+  ctx.strokeStyle = '#2E333A';
+  ctx.lineWidth = 1;
+  for(let i=0; i<=3; i++){
+    const y = pad.top + (plotH/3)*i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w-pad.right, y); ctx.stroke();
+  }
+
+  ctx.strokeStyle = '#E8542A';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    const x = xFor(i), y = yFor(p.value);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  ctx.fillStyle = '#E8542A';
+  points.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(xFor(i), yFor(p.value), 3.5, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  ctx.fillStyle = '#8B909A';
+  ctx.font = '11px JetBrains Mono';
+  ctx.textAlign = 'right';
+  ctx.fillText(maxV.toFixed(1)+unit, pad.left-6, pad.top+4);
+  ctx.fillText(minV.toFixed(1)+unit, pad.left-6, pad.top+plotH);
+  ctx.textAlign = 'left';
+  ctx.fillText(points[0].date, pad.left, h-8);
+  ctx.textAlign = 'right';
+  ctx.fillText(points[points.length-1].date, w-pad.right, h-8);
+}
 </script>
 
 </body>
