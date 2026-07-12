@@ -360,6 +360,164 @@
     text-align:center;
     padding:30px 0;
   }
+
+  /* Diet section */
+  .summary-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  .summary-item{
+    background:var(--surface-raised);
+    border-radius:8px;
+    padding:12px;
+  }
+  .summary-item .label{
+    font-size:11px;
+    color:var(--text-muted);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:4px;
+  }
+  .summary-item .value{
+    font-family:'JetBrains Mono',monospace;
+    font-size:18px;
+    font-weight:700;
+  }
+  .summary-item .target{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--text-muted);
+  }
+  .bar-track{
+    height:6px;
+    background:var(--border);
+    border-radius:3px;
+    margin-top:8px;
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    background:var(--accent);
+    border-radius:3px;
+    transition:width 0.4s;
+  }
+  .search-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:12px;
+  }
+  .search-row input{
+    flex:1;
+    background:var(--surface-raised);
+    border:1px solid var(--border);
+    border-radius:6px;
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:10px 12px;
+  }
+  .search-row input:focus{outline:none; border-color:var(--accent);}
+  .search-row button{
+    background:var(--accent);
+    border:none;
+    border-radius:6px;
+    color:var(--bg);
+    font-weight:700;
+    padding:0 16px;
+    cursor:pointer;
+  }
+  .food-result{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
+  }
+  .food-result:last-child{border-bottom:none;}
+  .food-result .fname{font-size:14px;}
+  .food-result .fmacro{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--text-muted);
+  }
+  .log-food-form{
+    background:var(--surface-raised);
+    border-radius:8px;
+    padding:12px;
+    margin-top:10px;
+    display:none;
+  }
+  .log-food-form.active{display:block;}
+  .log-food-form .row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .log-food-form input{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:6px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    padding:8px 10px;
+    width:90px;
+  }
+  .log-food-form button{
+    background:var(--accent);
+    border:none;
+    border-radius:6px;
+    color:var(--bg);
+    font-weight:700;
+    padding:8px 14px;
+    cursor:pointer;
+  }
+  .meal-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .meal-row:last-child{border-bottom:none;}
+  .meal-row .fname{font-size:14px;}
+  .meal-row .fmacro{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--text-muted);
+  }
+  .meal-row button{
+    background:var(--surface-raised);
+    border:1px solid var(--border);
+    border-radius:6px;
+    color:var(--text);
+    font-family:'Oswald',sans-serif;
+    font-size:11px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    padding:7px 10px;
+    cursor:pointer;
+  }
+  .toggle-link{
+    color:var(--accent);
+    font-size:12px;
+    text-decoration:underline;
+    cursor:pointer;
+    display:inline-block;
+    margin-top:6px;
+  }
+  .today-log-item{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    padding:6px 0;
+    border-bottom:1px solid var(--border);
+    color:var(--text-muted);
+  }
+  .today-log-item:last-child{border-bottom:none;}
 </style>
 </head>
 <body>
@@ -380,6 +538,7 @@
   <div class="nav-tabs">
     <button class="nav-tab active" id="tabWorkout">Workout</button>
     <button class="nav-tab" id="tabProgress">Progress</button>
+    <button class="nav-tab" id="tabDiet">Diet</button>
   </div>
 </header>
 
@@ -423,6 +582,62 @@
       <h3>Lift Progress</h3>
       <select class="chart-select" id="exerciseChartSelect"></select>
       <canvas id="liftChart" width="600" height="220"></canvas>
+    </div>
+  </div>
+
+  <div id="dietView" style="display:none">
+    <div class="metrics-card">
+      <h3>Today's Totals</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="label">Calories</div>
+          <div class="value" id="sumCals">0</div>
+          <div class="target">Target 3000–3200</div>
+          <div class="bar-track"><div class="bar-fill" id="barCals" style="width:0%"></div></div>
+        </div>
+        <div class="summary-item">
+          <div class="label">Protein</div>
+          <div class="value" id="sumProtein">0g</div>
+          <div class="target">Target 140–160g</div>
+          <div class="bar-track"><div class="bar-fill" id="barProtein" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div id="todayLogList" style="margin-top:14px"></div>
+    </div>
+
+    <div class="metrics-card">
+      <h3>Search Food</h3>
+      <div class="search-row">
+        <input type="text" id="foodSearchInput" placeholder="e.g. chicken breast">
+        <button id="foodSearchBtn">Search</button>
+      </div>
+      <div id="foodResults"></div>
+      <div class="log-food-form" id="logFoodForm">
+        <div class="row">
+          <input type="number" id="logGrams" placeholder="grams" inputmode="decimal">
+          <span id="logFoodPreview" style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-muted)"></span>
+        </div>
+        <button id="confirmLogFood">Add to Today's Log</button>
+      </div>
+    </div>
+
+    <div class="metrics-card">
+      <h3>My Meals</h3>
+      <div id="myMealsList"></div>
+      <div class="toggle-link" id="showAddMeal">+ Save a new meal</div>
+      <div class="log-food-form" id="addMealForm">
+        <div class="row"><input type="text" id="newMealName" placeholder="Meal name" style="width:100%"></div>
+        <div class="row">
+          <input type="number" id="newMealGrams" placeholder="grams">
+          <input type="number" id="newMealCals" placeholder="kcal">
+          <input type="number" id="newMealProtein" placeholder="protein g">
+        </div>
+        <div class="row">
+          <input type="number" id="newMealCarbs" placeholder="carbs g">
+          <input type="number" id="newMealFat" placeholder="fat g">
+        </div>
+        <button id="saveMealBtn">Save Meal</button>
+      </div>
     </div>
   </div>
 </main>
@@ -642,16 +857,224 @@ const progressView = document.getElementById('progressView');
 tabWorkout.addEventListener('click', () => {
   tabWorkout.classList.add('active');
   tabProgress.classList.remove('active');
+  tabDiet.classList.remove('active');
   workoutView.style.display = 'block';
   progressView.style.display = 'none';
+  dietView.style.display = 'none';
 });
 
 tabProgress.addEventListener('click', () => {
   tabProgress.classList.add('active');
   tabWorkout.classList.remove('active');
+  tabDiet.classList.remove('active');
   progressView.style.display = 'block';
   workoutView.style.display = 'none';
+  dietView.style.display = 'none';
   loadProgressView();
+});
+
+const tabDiet = document.getElementById('tabDiet');
+const dietView = document.getElementById('dietView');
+const CAL_TARGET_MID = 3100;
+const PROTEIN_TARGET_MID = 150;
+
+tabDiet.addEventListener('click', () => {
+  tabDiet.classList.add('active');
+  tabWorkout.classList.remove('active');
+  tabProgress.classList.remove('active');
+  dietView.style.display = 'block';
+  workoutView.style.display = 'none';
+  progressView.style.display = 'none';
+  loadDietView();
+});
+
+function loadDietView(){
+  loadTodaySummary();
+  loadMyMeals();
+}
+
+// ==== Daily summary ====
+async function loadTodaySummary(){
+  const res = await fetch(`${API_URL}?action=foodlog&date=${todayDate()}`);
+  const entries = await res.json();
+
+  let cals=0, protein=0;
+  entries.forEach(e => { cals += Number(e.calories)||0; protein += Number(e.protein)||0; });
+
+  document.getElementById('sumCals').textContent = Math.round(cals);
+  document.getElementById('sumProtein').textContent = Math.round(protein)+'g';
+  document.getElementById('barCals').style.width = Math.min(100, (cals/CAL_TARGET_MID)*100)+'%';
+  document.getElementById('barProtein').style.width = Math.min(100, (protein/PROTEIN_TARGET_MID)*100)+'%';
+
+  const list = document.getElementById('todayLogList');
+  list.innerHTML = '';
+  entries.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'today-log-item';
+    row.innerHTML = `<span>${e.foodName} (${e.grams}g)</span><span>${Math.round(e.calories)} kcal · ${Math.round(e.protein)}g protein</span>`;
+    list.appendChild(row);
+  });
+}
+
+// ==== Food search (Open Food Facts — free, no key) ====
+let selectedFood = null;
+
+document.getElementById('foodSearchBtn').addEventListener('click', searchFood);
+document.getElementById('foodSearchInput').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') searchFood();
+});
+
+async function searchFood(){
+  const query = document.getElementById('foodSearchInput').value.trim();
+  if(!query) return;
+  const resultsEl = document.getElementById('foodResults');
+  resultsEl.innerHTML = '<div class="empty-chart">Searching...</div>';
+
+  try{
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const products = (data.products || []).filter(p => p.product_name && p.nutriments && p.nutriments['energy-kcal_100g']);
+
+    resultsEl.innerHTML = '';
+    if(products.length === 0){
+      resultsEl.innerHTML = '<div class="empty-chart">No results — try a simpler search term</div>';
+      return;
+    }
+
+    products.slice(0,8).forEach(p => {
+      const n = p.nutriments;
+      const row = document.createElement('div');
+      row.className = 'food-result';
+      row.innerHTML = `<div class="fname">${p.product_name}</div>
+        <div class="fmacro">${Math.round(n['energy-kcal_100g']||0)}kcal/100g</div>`;
+      row.addEventListener('click', () => selectFood(p));
+      resultsEl.appendChild(row);
+    });
+  } catch(err){
+    resultsEl.innerHTML = '<div class="empty-chart">Search failed — check your connection and try again</div>';
+  }
+}
+
+function selectFood(product){
+  const n = product.nutriments;
+  selectedFood = {
+    name: product.product_name,
+    cals100: n['energy-kcal_100g'] || 0,
+    protein100: n['proteins_100g'] || 0,
+    carbs100: n['carbohydrates_100g'] || 0,
+    fat100: n['fat_100g'] || 0,
+    source: 'Open Food Facts'
+  };
+  document.getElementById('logFoodForm').classList.add('active');
+  document.getElementById('logGrams').value = 100;
+  updateLogPreview();
+}
+
+document.getElementById('logGrams').addEventListener('input', updateLogPreview);
+function updateLogPreview(){
+  if(!selectedFood) return;
+  const g = Number(document.getElementById('logGrams').value) || 0;
+  const cals = (selectedFood.cals100/100)*g;
+  const protein = (selectedFood.protein100/100)*g;
+  document.getElementById('logFoodPreview').textContent =
+    `${selectedFood.name} — ${Math.round(cals)}kcal, ${Math.round(protein)}g protein`;
+}
+
+document.getElementById('confirmLogFood').addEventListener('click', async () => {
+  if(!selectedFood) return;
+  const g = Number(document.getElementById('logGrams').value) || 0;
+  if(g <= 0){ flashToast("Enter grams first"); return; }
+
+  const entry = {
+    type: 'food',
+    date: todayDate(),
+    meal: '',
+    foodName: selectedFood.name,
+    grams: g,
+    calories: Math.round((selectedFood.cals100/100)*g),
+    protein: Math.round((selectedFood.protein100/100)*g),
+    carbs: Math.round((selectedFood.carbs100/100)*g),
+    fat: Math.round((selectedFood.fat100/100)*g),
+    source: selectedFood.source
+  };
+
+  await fetch(API_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(entry)
+  });
+
+  flashToast("Logged to today");
+  document.getElementById('logFoodForm').classList.remove('active');
+  document.getElementById('foodResults').innerHTML = '';
+  document.getElementById('foodSearchInput').value = '';
+  selectedFood = null;
+  loadTodaySummary();
+});
+
+// ==== My Meals ====
+async function loadMyMeals(){
+  const res = await fetch(`${API_URL}?action=custommeals`);
+  const meals = await res.json();
+  const list = document.getElementById('myMealsList');
+  list.innerHTML = '';
+
+  if(meals.length === 0){
+    list.innerHTML = '<div class="empty-chart">No saved meals yet — add your regulars below</div>';
+    return;
+  }
+
+  meals.forEach(m => {
+    const row = document.createElement('div');
+    row.className = 'meal-row';
+    row.innerHTML = `<div>
+        <div class="fname">${m.name}</div>
+        <div class="fmacro">${m.calories}kcal · ${m.protein}g protein per ${m.gramsBase}g</div>
+      </div>
+      <button>Log</button>`;
+    row.querySelector('button').addEventListener('click', async () => {
+      await fetch(API_URL, {
+        method:'POST', headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({
+          type:'food', date: todayDate(), meal:'',
+          foodName: m.name, grams: m.gramsBase,
+          calories: m.calories, protein: m.protein, carbs: m.carbs, fat: m.fat,
+          source: 'My Meals'
+        })
+      });
+      flashToast(m.name + " logged");
+      loadTodaySummary();
+    });
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('showAddMeal').addEventListener('click', () => {
+  document.getElementById('addMealForm').classList.toggle('active');
+});
+
+document.getElementById('saveMealBtn').addEventListener('click', async () => {
+  const name = document.getElementById('newMealName').value.trim();
+  const gramsBase = document.getElementById('newMealGrams').value;
+  const calories = document.getElementById('newMealCals').value;
+  const protein = document.getElementById('newMealProtein').value;
+  const carbs = document.getElementById('newMealCarbs').value;
+  const fat = document.getElementById('newMealFat').value;
+
+  if(!name || !gramsBase || !calories){
+    flashToast("Name, grams, and calories are required");
+    return;
+  }
+
+  await fetch(API_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain'},
+    body: JSON.stringify({ type:'custommeal', name, gramsBase, calories, protein, carbs, fat })
+  });
+
+  flashToast("Meal saved");
+  ['newMealName','newMealGrams','newMealCals','newMealProtein','newMealCarbs','newMealFat']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('addMealForm').classList.remove('active');
+  loadMyMeals();
 });
 
 function loadProgressView(){
