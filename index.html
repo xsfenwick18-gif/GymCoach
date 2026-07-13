@@ -51,6 +51,7 @@
     display:flex;
     align-items:center;
     gap:10px;
+    flex-wrap:wrap;
   }
   .day-picker label{
     font-family:'Oswald',sans-serif;
@@ -72,11 +73,50 @@
     cursor:pointer;
   }
   .day-picker select:focus{outline:none; border-color:var(--accent);}
+  .day-status{
+    font-family:'Oswald',sans-serif;
+    font-size:10px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    padding:4px 9px;
+    border-radius:20px;
+    background:var(--surface-raised);
+    color:var(--text-muted);
+  }
+  .day-status.auto{color:var(--success); background:rgba(22,163,74,0.1);}
+  .day-status.override{color:var(--accent); background:rgba(37,99,235,0.1);}
+  .reset-today{
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    color:var(--accent);
+    text-decoration:underline;
+    cursor:pointer;
+    background:none;
+    border:none;
+    padding:0;
+    display:none;
+  }
+  .reset-today.show{display:inline-block;}
   main{max-width:640px; margin:0 auto; padding:20px 16px;}
   .rest-day{
     text-align:center;
-    padding:60px 20px;
+    padding:50px 20px 40px;
     color:var(--text-muted);
+  }
+  .rest-day .icon-ring{
+    width:64px; height:64px;
+    margin:0 auto 18px;
+    border:3px solid var(--border);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .rest-day .icon-ring::after{
+    content:"";
+    width:10px; height:10px;
+    background:var(--border);
+    border-radius:50%;
   }
   .rest-day .big{
     font-family:'Oswald',sans-serif;
@@ -86,6 +126,21 @@
     letter-spacing:1px;
     margin-bottom:8px;
   }
+  .rest-day .sub{max-width:340px; margin:0 auto; font-size:13px; line-height:1.5;}
+  .rest-day .log-anyway{
+    margin-top:20px;
+    background:none;
+    border:1px solid var(--border);
+    color:var(--text-muted);
+    font-family:'Oswald',sans-serif;
+    font-size:12px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    padding:10px 18px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .rest-day .log-anyway:hover{border-color:var(--accent); color:var(--accent);}
   .exercise-card{
     background:var(--surface);
     border:1px solid var(--border);
@@ -534,6 +589,8 @@
       <option value="Lower B">Lower B — Friday</option>
       <option value="Rest">Rest Day</option>
     </select>
+    <span class="day-status auto" id="dayStatus">Auto-detected</span>
+    <button class="reset-today" id="resetToday">Reset to today</button>
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" id="tabWorkout">Workout</button>
@@ -545,8 +602,10 @@
 <main id="main">
   <div id="workoutView">
     <div class="rest-day" id="restDayMsg" style="display:none">
+      <div class="icon-ring"></div>
       <div class="big">Rest Day</div>
-      <div>No session scheduled today. Recovery is part of the program too.</div>
+      <div class="sub">No session scheduled today. Recovery is part of the program too — muscle grows during rest, not just under the bar.</div>
+      <button class="log-anyway" id="logAnywayBtn">Log a session anyway</button>
     </div>
     <div id="exerciseList"></div>
 
@@ -673,36 +732,68 @@ const REST_BIG = 150;   // 2.5 min
 const REST_SMALL = 75;  // 1.25 min
 
 const DAY_MAP = { 2: "Upper A", 3: "Lower A", 4: "Upper B", 5: "Lower B" };
+const DAY_FULL_NAME = {
+  "Upper A": "Upper A — Tuesday", "Lower A": "Lower A — Wednesday",
+  "Upper B": "Upper B — Thursday", "Lower B": "Lower B — Friday", "Rest": "Rest Day"
+};
 
 function todayDay(){
+  // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat.
+  // Only Tue–Fri map to a training day; everything else is Rest.
   return DAY_MAP[new Date().getDay()] || "Rest";
 }
 function todayDate(){
   return new Date().toISOString().slice(0,10);
 }
 
-let currentDay = todayDay();
+// REAL_TODAY_DAY is the ground truth, computed once and never mutated —
+// it's what "Reset to today" always returns to, regardless of what's
+// been manually selected in the dropdown during this session.
+const REAL_TODAY_DAY = todayDay();
+let currentDay = REAL_TODAY_DAY;
 
-// Set the dropdown to today's auto-detected day on first load —
-// still fully editable, this is just a starting guess, not a lock.
 const daySelect = document.getElementById('daySelect');
+const dayStatus = document.getElementById('dayStatus');
+const resetTodayBtn = document.getElementById('resetToday');
 daySelect.value = currentDay;
-daySelect.addEventListener('change', () => {
-  currentDay = daySelect.value;
+updateDayStatus();
+
+function updateDayStatus(){
+  const isAuto = currentDay === REAL_TODAY_DAY;
+  dayStatus.textContent = isAuto ? "Auto-detected" : "Manual preview";
+  dayStatus.className = 'day-status ' + (isAuto ? 'auto' : 'override');
+  resetTodayBtn.className = 'reset-today' + (isAuto ? '' : ' show');
+}
+
+function switchToDay(day){
+  currentDay = day;
+  daySelect.value = day;
+  updateDayStatus();
   document.getElementById('exerciseList').innerHTML = '';
   document.getElementById('restDayMsg').style.display = 'none';
   document.getElementById('finishSection').style.display = 'none';
   loadWorkout();
+}
+
+daySelect.addEventListener('change', () => switchToDay(daySelect.value));
+resetTodayBtn.addEventListener('click', () => switchToDay(REAL_TODAY_DAY));
+document.getElementById('logAnywayBtn').addEventListener('click', () => {
+  daySelect.focus();
+  flashToast("Pick a day above to log a session for it");
 });
 
 async function loadWorkout(){
   const dayLabel = document.getElementById('dayLabel');
+  const isPreview = currentDay !== REAL_TODAY_DAY;
+  const dateStr = new Date().toDateString();
+
   if(currentDay === "Rest"){
-    dayLabel.textContent = "REST DAY";
+    dayLabel.textContent = isPreview ? "REST DAY (PREVIEW)" : "REST DAY · " + dateStr;
     document.getElementById('restDayMsg').style.display = 'block';
     return;
   }
-  dayLabel.textContent = currentDay.toUpperCase() + " · " + new Date().toDateString();
+
+  dayLabel.textContent = currentDay.toUpperCase() + (isPreview ? " (PREVIEW)" : " · " + dateStr);
 
   const res = await fetch(`${API_URL}?day=${encodeURIComponent(currentDay)}`);
   const exercises = await res.json();
