@@ -457,46 +457,6 @@
     border-radius:3px;
     transition:width 0.4s;
   }
-  .search-row{
-    display:flex;
-    gap:8px;
-    margin-bottom:12px;
-  }
-  .search-row input{
-    flex:1;
-    background:var(--surface-raised);
-    border:1px solid var(--border);
-    border-radius:6px;
-    color:var(--text);
-    font-family:'Inter',sans-serif;
-    font-size:14px;
-    padding:10px 12px;
-  }
-  .search-row input:focus{outline:none; border-color:var(--accent);}
-  .search-row button{
-    background:var(--accent);
-    border:none;
-    border-radius:6px;
-    color:#FFFFFF;
-    font-weight:700;
-    padding:0 16px;
-    cursor:pointer;
-  }
-  .food-result{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:10px 0;
-    border-bottom:1px solid var(--border);
-    cursor:pointer;
-  }
-  .food-result:last-child{border-bottom:none;}
-  .food-result .fname{font-size:14px;}
-  .food-result .fmacro{
-    font-family:'JetBrains Mono',monospace;
-    font-size:12px;
-    color:var(--text-muted);
-  }
   .log-food-form{
     background:var(--surface-raised);
     border-radius:8px;
@@ -662,22 +622,6 @@
         </div>
       </div>
       <div id="todayLogList" style="margin-top:14px"></div>
-    </div>
-
-    <div class="metrics-card">
-      <h3>Search Food</h3>
-      <div class="search-row">
-        <input type="text" id="foodSearchInput" placeholder="e.g. chicken breast">
-        <button id="foodSearchBtn">Search</button>
-      </div>
-      <div id="foodResults"></div>
-      <div class="log-food-form" id="logFoodForm">
-        <div class="row">
-          <input type="number" id="logGrams" placeholder="grams" inputmode="decimal">
-          <span id="logFoodPreview" style="font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-muted)"></span>
-        </div>
-        <button id="confirmLogFood">Add to Today's Log</button>
-      </div>
     </div>
 
     <div class="metrics-card">
@@ -1008,100 +952,6 @@ async function loadTodaySummary(){
 }
 
 // ==== Food search (Open Food Facts — free, no key) ====
-let selectedFood = null;
-
-document.getElementById('foodSearchBtn').addEventListener('click', searchFood);
-document.getElementById('foodSearchInput').addEventListener('keydown', (e) => {
-  if(e.key === 'Enter') searchFood();
-});
-
-async function searchFood(){
-  const query = document.getElementById('foodSearchInput').value.trim();
-  if(!query) return;
-  const resultsEl = document.getElementById('foodResults');
-  resultsEl.innerHTML = '<div class="empty-chart">Searching...</div>';
-
-  try{
-    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const products = (data.products || []).filter(p => p.product_name && p.nutriments && p.nutriments['energy-kcal_100g']);
-
-    resultsEl.innerHTML = '';
-    if(products.length === 0){
-      resultsEl.innerHTML = '<div class="empty-chart">No results — try a simpler search term</div>';
-      return;
-    }
-
-    products.slice(0,8).forEach(p => {
-      const n = p.nutriments;
-      const row = document.createElement('div');
-      row.className = 'food-result';
-      row.innerHTML = `<div class="fname">${p.product_name}</div>
-        <div class="fmacro">${Math.round(n['energy-kcal_100g']||0)}kcal/100g</div>`;
-      row.addEventListener('click', () => selectFood(p));
-      resultsEl.appendChild(row);
-    });
-  } catch(err){
-    resultsEl.innerHTML = '<div class="empty-chart">Search failed — check your connection and try again</div>';
-  }
-}
-
-function selectFood(product){
-  const n = product.nutriments;
-  selectedFood = {
-    name: product.product_name,
-    cals100: n['energy-kcal_100g'] || 0,
-    protein100: n['proteins_100g'] || 0,
-    carbs100: n['carbohydrates_100g'] || 0,
-    fat100: n['fat_100g'] || 0,
-    source: 'Open Food Facts'
-  };
-  document.getElementById('logFoodForm').classList.add('active');
-  document.getElementById('logGrams').value = 100;
-  updateLogPreview();
-}
-
-document.getElementById('logGrams').addEventListener('input', updateLogPreview);
-function updateLogPreview(){
-  if(!selectedFood) return;
-  const g = Number(document.getElementById('logGrams').value) || 0;
-  const cals = (selectedFood.cals100/100)*g;
-  const protein = (selectedFood.protein100/100)*g;
-  document.getElementById('logFoodPreview').textContent =
-    `${selectedFood.name} — ${Math.round(cals)}kcal, ${Math.round(protein)}g protein`;
-}
-
-document.getElementById('confirmLogFood').addEventListener('click', async () => {
-  if(!selectedFood) return;
-  const g = Number(document.getElementById('logGrams').value) || 0;
-  if(g <= 0){ flashToast("Enter grams first"); return; }
-
-  const entry = {
-    type: 'food',
-    date: todayDate(),
-    meal: '',
-    foodName: selectedFood.name,
-    grams: g,
-    calories: Math.round((selectedFood.cals100/100)*g),
-    protein: Math.round((selectedFood.protein100/100)*g),
-    carbs: Math.round((selectedFood.carbs100/100)*g),
-    fat: Math.round((selectedFood.fat100/100)*g),
-    source: selectedFood.source
-  };
-
-  await fetch(API_URL, {
-    method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(entry)
-  });
-
-  flashToast("Logged to today");
-  document.getElementById('logFoodForm').classList.remove('active');
-  document.getElementById('foodResults').innerHTML = '';
-  document.getElementById('foodSearchInput').value = '';
-  selectedFood = null;
-  loadTodaySummary();
-});
-
 // ==== My Meals ====
 async function loadMyMeals(){
   const res = await fetch(`${API_URL}?action=custommeals`);
