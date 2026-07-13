@@ -8,15 +8,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#14161A;
-    --surface:#1C1F24;
-    --surface-raised:#24282F;
-    --text:#EDEDE9;
-    --text-muted:#8B909A;
-    --accent:#E8542A;
-    --accent-dim:#C4431E;
-    --success:#4FA97C;
-    --border:#2E333A;
+    --bg:#FFFFFF;
+    --surface:#F3F5F8;
+    --surface-raised:#E8ECF1;
+    --text:#1A2233;
+    --text-muted:#64748B;
+    --accent:#2563EB;
+    --accent-dim:#1D4ED8;
+    --success:#16A34A;
+    --border:#DDE3EA;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
@@ -139,7 +139,7 @@
     background:var(--accent);
     border:none;
     border-radius:6px;
-    color:var(--bg);
+    color:#FFFFFF;
     font-weight:700;
     font-size:16px;
     height:38px;
@@ -189,7 +189,7 @@
     background:var(--accent);
     border:none;
     border-radius:6px;
-    color:var(--bg);
+    color:#FFFFFF;
     font-family:'Oswald',sans-serif;
     font-weight:600;
     letter-spacing:1px;
@@ -218,7 +218,7 @@
   /* Rest timer overlay */
   .rest-overlay{
     position:fixed; inset:0;
-    background:rgba(20,22,26,0.97);
+    background:rgba(245,244,241,0.97);
     display:none;
     flex-direction:column;
     align-items:center;
@@ -332,7 +332,7 @@
     background:var(--accent);
     border:none;
     border-radius:6px;
-    color:var(--bg);
+    color:#FFFFFF;
     font-family:'Oswald',sans-serif;
     font-weight:600;
     letter-spacing:1px;
@@ -422,7 +422,7 @@
     background:var(--accent);
     border:none;
     border-radius:6px;
-    color:var(--bg);
+    color:#FFFFFF;
     font-weight:700;
     padding:0 16px;
     cursor:pointer;
@@ -470,7 +470,7 @@
     background:var(--accent);
     border:none;
     border-radius:6px;
-    color:var(--bg);
+    color:#FFFFFF;
     font-weight:700;
     padding:8px 14px;
     cursor:pointer;
@@ -1143,7 +1143,7 @@ function drawLineChart(canvasId, points, unit){
   ctx.clearRect(0, 0, w, h);
 
   if(points.length < 2){
-    ctx.fillStyle = '#8B909A';
+    ctx.fillStyle = '#64748B';
     ctx.font = '13px Inter';
     ctx.textAlign = 'center';
     ctx.fillText('Log a few sessions to see progress here', w/2, h/2);
@@ -1160,14 +1160,14 @@ function drawLineChart(canvasId, points, unit){
   const xFor = i => pad.left + (i / (points.length - 1)) * plotW;
   const yFor = v => pad.top + plotH - ((v - minV) / (maxV - minV || 1)) * plotH;
 
-  ctx.strokeStyle = '#2E333A';
+  ctx.strokeStyle = '#DDE3EA';
   ctx.lineWidth = 1;
   for(let i=0; i<=3; i++){
     const y = pad.top + (plotH/3)*i;
     ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w-pad.right, y); ctx.stroke();
   }
 
-  ctx.strokeStyle = '#E8542A';
+  ctx.strokeStyle = '#2563EB';
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   points.forEach((p, i) => {
@@ -1176,14 +1176,14 @@ function drawLineChart(canvasId, points, unit){
   });
   ctx.stroke();
 
-  ctx.fillStyle = '#E8542A';
+  ctx.fillStyle = '#2563EB';
   points.forEach((p, i) => {
     ctx.beginPath();
     ctx.arc(xFor(i), yFor(p.value), 3.5, 0, Math.PI*2);
     ctx.fill();
   });
 
-  ctx.fillStyle = '#8B909A';
+  ctx.fillStyle = '#64748B';
   ctx.font = '11px JetBrains Mono';
   ctx.textAlign = 'right';
   ctx.fillText(maxV.toFixed(1)+unit, pad.left-6, pad.top+4);
