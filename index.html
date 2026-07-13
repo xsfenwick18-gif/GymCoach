@@ -253,22 +253,144 @@
     padding:12px;
     cursor:pointer;
   }
-  .toast{
+  .toast-stack{
     position:fixed;
-    bottom:20px; left:50%;
+    bottom:24px; left:50%;
     transform:translateX(-50%);
-    background:var(--surface-raised);
-    border:1px solid var(--success);
-    color:var(--success);
-    padding:10px 18px;
-    border-radius:8px;
-    font-size:14px;
-    font-family:'Inter',sans-serif;
-    opacity:0;
-    transition:opacity 0.3s;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    align-items:center;
+    z-index:200;
     pointer-events:none;
   }
-  .toast.show{opacity:1;}
+  .toast{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--surface-raised);
+    border:1px solid var(--border);
+    border-left:3px solid var(--success);
+    color:var(--text);
+    padding:12px 18px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-family:'Inter',sans-serif;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+    opacity:0;
+    transform:translateY(12px) scale(0.96);
+    animation:toastIn 0.32s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+  .toast.leaving{animation:toastOut 0.25s ease-in forwards;}
+  .toast.error{border-left-color:var(--accent);}
+  .toast .toast-icon{
+    width:18px; height:18px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    background:var(--success);
+    color:var(--bg);
+    font-size:11px;
+    font-weight:700;
+  }
+  .toast.error .toast-icon{background:var(--accent);}
+  @keyframes toastIn{
+    0%{opacity:0; transform:translateY(14px) scale(0.94);}
+    100%{opacity:1; transform:translateY(0) scale(1);}
+  }
+  @keyframes toastOut{
+    0%{opacity:1; transform:translateY(0) scale(1);}
+    100%{opacity:0; transform:translateY(-8px) scale(0.96);}
+  }
+
+  /* Button loading / success micro-states */
+  @keyframes btnSpin{ to{ transform:rotate(360deg); } }
+  .btn-spinner{
+    display:inline-block;
+    width:13px; height:13px;
+    border:2px solid rgba(255,255,255,0.4);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:btnSpin 0.6s linear infinite;
+    vertical-align:middle;
+    margin-right:7px;
+  }
+  .btn-success-flash{
+    background:var(--success) !important;
+    transition:background 0.25s;
+  }
+  .btn-error-flash{
+    background:var(--accent) !important;
+    transition:background 0.25s;
+  }
+
+  /* New-entry row highlight */
+  @keyframes rowHighlight{
+    0%{ background:rgba(37,99,235,0.16); }
+    100%{ background:transparent; }
+  }
+  .row-highlight{ animation:rowHighlight 1.4s ease-out; border-radius:6px; }
+
+  /* Stat number pop */
+  @keyframes statPop{
+    0%{ transform:scale(1); }
+    30%{ transform:scale(1.14); color:var(--success); }
+    100%{ transform:scale(1); }
+  }
+  .stat-pop{ animation:statPop 0.5s ease-out; display:inline-block; }
+
+  /* Session complete overlay */
+  .complete-overlay{
+    position:fixed; inset:0;
+    background:rgba(20,22,26,0.75);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:150;
+  }
+  .complete-overlay.active{display:flex; animation:fadeIn 0.2s ease;}
+  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+  .complete-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:36px 40px;
+    text-align:center;
+    max-width:300px;
+    animation:cardPop 0.4s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  }
+  @keyframes cardPop{
+    0%{ transform:scale(0.8); opacity:0; }
+    100%{ transform:scale(1); opacity:1; }
+  }
+  .complete-check{
+    width:60px; height:60px;
+    margin:0 auto 16px;
+    border-radius:50%;
+    background:var(--success);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .complete-check svg{ width:28px; height:28px; }
+  .complete-check path{
+    stroke:var(--bg); stroke-width:3; fill:none;
+    stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:24; stroke-dashoffset:24;
+    animation:drawCheck 0.4s 0.15s ease forwards;
+  }
+  @keyframes drawCheck{ to{ stroke-dashoffset:0; } }
+  .complete-title{
+    font-family:'Oswald',sans-serif;
+    font-size:18px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .complete-sub{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    color:var(--text-muted);
+  }
 
   /* Rest timer overlay */
   .rest-overlay{
@@ -662,7 +784,17 @@
   <div class="next-up" id="nextUp"></div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast-stack" id="toastStack"></div>
+
+<div class="complete-overlay" id="completeOverlay">
+  <div class="complete-card">
+    <div class="complete-check">
+      <svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>
+    </div>
+    <div class="complete-title">Session Logged</div>
+    <div class="complete-sub" id="completeSubtext">Nice work — see you next session.</div>
+  </div>
+</div>
 
 <script>
 // ==== CONFIG ====
@@ -782,40 +914,110 @@ function renderExercises(exercises){
 async function logSet(ex, setNum, row){
   const w = row.querySelector('.w-input').value;
   const r = row.querySelector('.r-input').value;
-  if(!w || !r){ flashToast("Enter weight and reps first"); return; }
+  if(!w || !r){ flashToast("Enter weight and reps first", "error"); return; }
 
+  const btn = row.querySelector('.log-btn');
   disableAllLogButtons(true);
+  btn.innerHTML = '<span class="btn-spinner"></span>';
 
-  await fetch(API_URL, {
-    method: 'POST',
-    headers: {'Content-Type':'text/plain'},
-    body: JSON.stringify({
-      date: todayDate(),
-      day: currentDay,
-      exercise: ex.exercise,
-      set: setNum,
-      weight: w,
-      reps: r
-    })
-  });
+  try{
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        date: todayDate(),
+        day: currentDay,
+        exercise: ex.exercise,
+        set: setNum,
+        weight: w,
+        reps: r
+      })
+    });
+  } catch(err){
+    disableAllLogButtons(false);
+    btn.innerHTML = '✓';
+    flashToast("Couldn't log that set — check your connection", "error");
+    return;
+  }
 
   row.classList.add('done');
   row.innerHTML = `<div class="set-num">${setNum}</div><div class="done-summary">${w}kg × ${r} — logged</div>`;
+  highlightNewRow(row);
   flashToast("Set logged");
 
   const restSeconds = BIG_LIFTS.includes(ex.exercise) ? REST_BIG : REST_SMALL;
   startRestTimer(restSeconds, ex, setNum);
 }
 
-function disableAllLogButtons(state){
-  document.querySelectorAll('.log-btn').forEach(b => b.disabled = state);
+function flashToast(msg, type){
+  type = type || 'success';
+  const stack = document.getElementById('toastStack');
+  const t = document.createElement('div');
+  t.className = 'toast' + (type === 'error' ? ' error' : '');
+  const icon = document.createElement('div');
+  icon.className = 'toast-icon';
+  icon.textContent = type === 'error' ? '!' : '✓';
+  const msgEl = document.createElement('span');
+  msgEl.textContent = msg;
+  t.appendChild(icon);
+  t.appendChild(msgEl);
+  stack.appendChild(t);
+
+  setTimeout(() => {
+    t.classList.add('leaving');
+    setTimeout(() => t.remove(), 260);
+  }, 2200);
 }
 
-function flashToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 1800);
+// Puts a button into a spinner "Saving..." state, then flashes green/red
+// on completion before restoring its original label — gives clear visual
+// confirmation that a save/log action actually went through.
+async function withButtonFeedback(btn, action, opts){
+  opts = opts || {};
+  const loadingText = opts.loadingText || 'Saving...';
+  const successText = opts.successText || 'Saved';
+  const originalHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="btn-spinner"></span>${loadingText}`;
+
+  try{
+    await action();
+    btn.classList.add('btn-success-flash');
+    btn.innerHTML = '✓ ' + successText;
+    setTimeout(() => {
+      btn.classList.remove('btn-success-flash');
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
+    }, 900);
+    return true;
+  } catch(err){
+    btn.classList.add('btn-error-flash');
+    btn.innerHTML = '✗ Failed';
+    setTimeout(() => {
+      btn.classList.remove('btn-error-flash');
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
+    }, 1200);
+    flashToast('Something went wrong — try again', 'error');
+    return false;
+  }
+}
+
+// Briefly highlights a freshly-added row so new entries are visually obvious
+function highlightNewRow(el){
+  el.classList.add('row-highlight');
+  setTimeout(() => el.classList.remove('row-highlight'), 1400);
+}
+
+// Pops a stat number when it updates (calories/protein totals)
+function popStat(el){
+  el.classList.remove('stat-pop');
+  void el.offsetWidth; // restart animation
+  el.classList.add('stat-pop');
+}
+
+function disableAllLogButtons(state){
+  document.querySelectorAll('.log-btn').forEach(b => b.disabled = state);
 }
 
 // ==== Rest timer ====
@@ -854,24 +1056,39 @@ function startRestTimer(seconds, ex, setNum){
 }
 
 // ==== Finish workout ====
-document.getElementById('finishBtn').addEventListener('click', async () => {
+document.getElementById('finishBtn').addEventListener('click', async (e) => {
+  const btn = e.currentTarget;
   const notes = document.getElementById('sessionNotes').value;
-  await fetch(API_URL, {
-    method: 'POST',
-    headers: {'Content-Type':'text/plain'},
-    body: JSON.stringify({
-      date: todayDate(),
-      day: currentDay,
-      exercise: 'SESSION NOTES',
-      set: '',
-      weight: '',
-      reps: '',
-      notes: notes
-    })
-  });
-  flashToast("Session saved — nice work");
+
+  await withButtonFeedback(btn, async () => {
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        date: todayDate(),
+        day: currentDay,
+        exercise: 'SESSION NOTES',
+        set: '',
+        weight: '',
+        reps: '',
+        notes: notes
+      })
+    });
+  }, { loadingText: 'Saving...', successText: 'Done' });
+
   document.getElementById('sessionNotes').value = '';
+  showSessionComplete(currentDay);
 });
+
+function showSessionComplete(day){
+  const overlay = document.getElementById('completeOverlay');
+  document.getElementById('completeSubtext').textContent =
+    day && day !== 'Rest' ? `${day} logged — see you next session.` : 'Nice work — see you next session.';
+  overlay.classList.add('active');
+  setTimeout(() => overlay.classList.remove('active'), 2000);
+  overlay.addEventListener('click', () => overlay.classList.remove('active'), { once:true });
+}
+
 
 loadWorkout();
 
@@ -936,18 +1153,23 @@ async function loadTodaySummary(){
   let cals=0, protein=0;
   entries.forEach(e => { cals += Number(e.calories)||0; protein += Number(e.protein)||0; });
 
-  document.getElementById('sumCals').textContent = Math.round(cals);
-  document.getElementById('sumProtein').textContent = Math.round(protein)+'g';
+  const sumCalsEl = document.getElementById('sumCals');
+  const sumProteinEl = document.getElementById('sumProtein');
+  sumCalsEl.textContent = Math.round(cals);
+  sumProteinEl.textContent = Math.round(protein)+'g';
+  popStat(sumCalsEl);
+  popStat(sumProteinEl);
   document.getElementById('barCals').style.width = Math.min(100, (cals/CAL_TARGET_MID)*100)+'%';
   document.getElementById('barProtein').style.width = Math.min(100, (protein/PROTEIN_TARGET_MID)*100)+'%';
 
   const list = document.getElementById('todayLogList');
   list.innerHTML = '';
-  entries.forEach(e => {
+  entries.forEach((e, i) => {
     const row = document.createElement('div');
     row.className = 'today-log-item';
     row.innerHTML = `<span>${e.foodName} (${e.grams}g)</span><span>${Math.round(e.calories)} kcal · ${Math.round(e.protein)}g protein</span>`;
     list.appendChild(row);
+    if(i === entries.length - 1) highlightNewRow(row);
   });
 }
 
@@ -972,16 +1194,19 @@ async function loadMyMeals(){
         <div class="fmacro">${m.calories}kcal · ${m.protein}g protein per ${m.gramsBase}g</div>
       </div>
       <button>Log</button>`;
-    row.querySelector('button').addEventListener('click', async () => {
-      await fetch(API_URL, {
-        method:'POST', headers:{'Content-Type':'text/plain'},
-        body: JSON.stringify({
-          type:'food', date: todayDate(), meal:'',
-          foodName: m.name, grams: m.gramsBase,
-          calories: m.calories, protein: m.protein, carbs: m.carbs, fat: m.fat,
-          source: 'My Meals'
-        })
-      });
+    const logBtn = row.querySelector('button');
+    logBtn.addEventListener('click', async () => {
+      await withButtonFeedback(logBtn, async () => {
+        await fetch(API_URL, {
+          method:'POST', headers:{'Content-Type':'text/plain'},
+          body: JSON.stringify({
+            type:'food', date: todayDate(), meal:'',
+            foodName: m.name, grams: m.gramsBase,
+            calories: m.calories, protein: m.protein, carbs: m.carbs, fat: m.fat,
+            source: 'My Meals'
+          })
+        });
+      }, { loadingText:'', successText:'Logged' });
       flashToast(m.name + " logged");
       loadTodaySummary();
     });
@@ -993,7 +1218,7 @@ document.getElementById('showAddMeal').addEventListener('click', () => {
   document.getElementById('addMealForm').classList.toggle('active');
 });
 
-document.getElementById('saveMealBtn').addEventListener('click', async () => {
+document.getElementById('saveMealBtn').addEventListener('click', async (e) => {
   const name = document.getElementById('newMealName').value.trim();
   const gramsBase = document.getElementById('newMealGrams').value;
   const calories = document.getElementById('newMealCals').value;
@@ -1002,15 +1227,18 @@ document.getElementById('saveMealBtn').addEventListener('click', async () => {
   const fat = document.getElementById('newMealFat').value;
 
   if(!name || !gramsBase || !calories){
-    flashToast("Name, grams, and calories are required");
+    flashToast("Name, grams, and calories are required", "error");
     return;
   }
 
-  await fetch(API_URL, {
-    method:'POST', headers:{'Content-Type':'text/plain'},
-    body: JSON.stringify({ type:'custommeal', name, gramsBase, calories, protein, carbs, fat })
-  });
+  const ok = await withButtonFeedback(e.currentTarget, async () => {
+    await fetch(API_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ type:'custommeal', name, gramsBase, calories, protein, carbs, fat })
+    });
+  }, { loadingText: 'Saving...', successText: 'Saved' });
 
+  if(!ok) return;
   flashToast("Meal saved");
   ['newMealName','newMealGrams','newMealCals','newMealProtein','newMealCarbs','newMealFat']
     .forEach(id => document.getElementById(id).value = '');
@@ -1033,7 +1261,7 @@ function loadProgressView(){
 }
 
 // ==== Save body metrics ====
-document.getElementById('saveMetricsBtn').addEventListener('click', async () => {
+document.getElementById('saveMetricsBtn').addEventListener('click', async (e) => {
   const weight = document.getElementById('mWeight').value;
   const chest = document.getElementById('mChest').value;
   const waist = document.getElementById('mWaist').value;
@@ -1041,20 +1269,23 @@ document.getElementById('saveMetricsBtn').addEventListener('click', async () => 
   const legs = document.getElementById('mLegs').value;
 
   if(!weight && !chest && !waist && !arms && !legs){
-    flashToast("Enter at least one measurement");
+    flashToast("Enter at least one measurement", "error");
     return;
   }
 
-  await fetch(API_URL, {
-    method: 'POST',
-    headers: {'Content-Type':'text/plain'},
-    body: JSON.stringify({
-      type: 'bodymetric',
-      date: todayDate(),
-      weight, chest, waist, arms, legs
-    })
-  });
+  const ok = await withButtonFeedback(e.currentTarget, async () => {
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        type: 'bodymetric',
+        date: todayDate(),
+        weight, chest, waist, arms, legs
+      })
+    });
+  }, { loadingText: 'Saving...', successText: 'Saved' });
 
+  if(!ok) return;
   flashToast("Metrics saved");
   ['mWeight','mChest','mWaist','mArms','mLegs'].forEach(id => document.getElementById(id).value = '');
   loadWeightChart();
