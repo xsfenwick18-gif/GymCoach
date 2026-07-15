@@ -4,9 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PlateStack</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<meta property="og:title" content="PlateStack">
+<meta property="og:description" content="Progressive overload, visualized.">
+<meta property="og:image" content="social-share.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2563EB">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-startup-image" href="splash-default.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -32,6 +40,7 @@
     --shadow-inset:inset 0 1px 3px rgba(26,34,51,0.08);
   }
   *{box-sizing:border-box; margin:0; padding:0;}
+  .icon-inline svg{width:100%; height:100%; display:block;}
   body{
     background:var(--bg);
     color:var(--text);
@@ -54,14 +63,30 @@
     text-transform:uppercase;
   }
   .wordmark span{color:var(--accent);}
-  .day-label{
+  .day-label-row{
     margin-top:6px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .day-label{
     font-family:'Oswald',sans-serif;
     font-size:15px;
     letter-spacing:2px;
     text-transform:uppercase;
     color:var(--text-muted);
   }
+  .category-badge{
+    font-family:'Oswald',sans-serif;
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    padding:3px 8px;
+    border-radius:5px;
+    background:rgba(37,99,235,0.1);
+    color:var(--accent);
+  }
+  .category-badge.lower{background:rgba(22,163,74,0.1); color:var(--success);}
   .day-picker{
     margin-top:14px;
     display:flex;
@@ -128,22 +153,12 @@
     border-radius:14px;
     box-shadow:var(--shadow-md);
   }
-  .rest-day .icon-ring{
-    width:64px; height:64px;
+  .rest-illustration{
+    width:72px; height:72px;
     margin:0 auto 18px;
-    border:3px solid var(--border);
-    box-shadow:var(--shadow-sm);
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    filter:drop-shadow(var(--shadow-sm));
   }
-  .rest-day .icon-ring::after{
-    content:"";
-    width:10px; height:10px;
-    background:var(--accent);
-    border-radius:50%;
-  }
+  .rest-illustration svg{width:100%; height:100%;}
   .rest-day .big{
     font-family:'Oswald',sans-serif;
     font-size:22px;
@@ -192,6 +207,14 @@
     text-transform:uppercase;
     color:var(--text-muted);
     margin-bottom:12px;
+    display:flex;
+    align-items:center;
+  }
+  .perfect-week-note{
+    margin-top:10px;
+    font-size:11.5px;
+    color:#B45309;
+    font-weight:600;
   }
   .weekly-stat-row{
     display:flex;
@@ -248,20 +271,31 @@
   .sets-list{padding:0 18px 18px;}
   .breath-cue{
     margin:0 18px 12px;
-    padding:9px 12px;
     background:rgba(37,99,235,0.06);
-    border:1px solid rgba(37,99,235,0.15);
+    border:1px solid rgba(37,99,235,0.18);
     border-radius:8px;
+    padding:12px 14px;
+  }
+  .breath-line{
     font-family:'Inter',sans-serif;
-    font-size:11.5px;
-    line-height:1.4;
-    color:var(--accent-dim);
+    font-weight:600;
+    font-size:13px;
+    color:var(--accent);
+    line-height:1.5;
     display:flex;
     align-items:flex-start;
-    gap:7px;
+    gap:8px;
   }
-  .breath-cue strong{font-weight:700; color:var(--accent);}
-  .breath-icon{flex-shrink:0; font-size:13px; line-height:1.4;}
+  .lung-icon{flex-shrink:0;}
+  .breath-warning{
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px solid rgba(37,99,235,0.15);
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    color:#B45309;
+  }
   .last-time-row{
     display:flex;
     align-items:center;
@@ -344,6 +378,9 @@
     cursor:pointer;
     box-shadow:var(--shadow-accent);
     transition:transform 0.1s, box-shadow 0.1s;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
   .log-btn:active:not(:disabled){transform:translateY(2px); box-shadow:0 2px 6px rgba(37,99,235,0.3);}
   .log-btn:disabled{background:var(--border); color:var(--text-muted); cursor:not-allowed; box-shadow:none;}
@@ -607,7 +644,8 @@
     transition:transform 0.15s;
   }
   .coach-fab:active{transform:scale(0.93);}
-  .coach-fab-icon{font-size:24px;}
+  .coach-fab-icon{width:24px; height:24px; display:flex;}
+  .coach-fab-icon svg{width:100%; height:100%;}
   .coach-fab-badge{
     position:absolute;
     top:-2px; right:-2px;
@@ -839,6 +877,94 @@
   }
 
   /* Progress section */
+  .streak-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+  }
+  .streak-flame-badge{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    background:rgba(232,84,42,0.08);
+    padding:5px 10px;
+    border-radius:20px;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:13px;
+    color:#E8542A;
+  }
+  .milestone-row{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+  }
+  .milestone-badge{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    flex:1;
+    padding:10px 6px;
+    border-radius:10px;
+    background:var(--surface);
+    color:var(--border);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    font-weight:700;
+  }
+  .milestone-badge.earned{
+    background:rgba(37,99,235,0.08);
+    color:var(--accent);
+  }
+  .milestone-badge .icon-inline{color:inherit;}
+  .streak-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+  }
+  .streak-flame-badge{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    background:rgba(232,84,42,0.08);
+    border-radius:20px;
+    padding:5px 12px 5px 10px;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:13px;
+    color:#E8542A;
+  }
+  .milestone-row{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+  }
+  .milestone-badge{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    padding:10px 6px;
+    border-radius:10px;
+    background:var(--surface);
+    color:var(--border);
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:12px;
+  }
+  .milestone-badge.earned{
+    background:rgba(37,99,235,0.08);
+    color:var(--accent);
+  }
+  .milestone-badge .icon-inline{color:inherit;}
   .streak-calendar{
     display:grid;
     grid-template-columns:repeat(7, 1fr);
@@ -960,6 +1086,12 @@
     text-align:center;
     padding:30px 0;
   }
+  .empty-illustration{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 0 10px;
+  }
 
   /* Diet section */
   .score-header{
@@ -1022,6 +1154,21 @@
     text-transform:uppercase;
     letter-spacing:0.5px;
     margin-bottom:4px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .macro-dot{
+    width:16px; height:16px;
+    border-radius:50%;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-family:'Oswald',sans-serif;
+    font-size:8.5px;
+    font-weight:700;
+    flex-shrink:0;
   }
   .summary-item .value{
     font-family:'JetBrains Mono',monospace;
@@ -1145,8 +1292,12 @@
     margin-left:6px;
     border-radius:6px;
     flex-shrink:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
   }
   .delete-x:hover{color:var(--accent); background:rgba(37,99,235,0.08);}
+  .btn-inline-icon{vertical-align:middle; margin-right:2px;}
   .meal-row-actions{display:flex; gap:6px; align-items:center;}
   .grams-prompt{
     background:var(--surface);
@@ -1185,7 +1336,10 @@
 
 <header>
   <div class="wordmark">PLATE<span>STACK</span></div>
-  <div class="day-label" id="dayLabel">Loading...</div>
+  <div class="day-label-row">
+    <div class="day-label" id="dayLabel">Loading...</div>
+    <span class="category-badge" id="categoryBadge" style="display:none"></span>
+  </div>
   <div class="day-picker">
     <label for="daySelect">Today is:</label>
     <select id="daySelect">
@@ -1208,7 +1362,14 @@
 <main id="main">
   <div id="workoutView">
     <div class="rest-day" id="restDayMsg" style="display:none">
-      <div class="icon-ring"></div>
+      <div class="rest-illustration">
+        <svg viewBox="0 0 64 64" fill="none">
+          <circle cx="32" cy="32" r="26" stroke="var(--border)" stroke-width="3"/>
+          <path d="M20 34c2-10 8-16 12-16s3 8-2 12 6 4 8-2" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <circle cx="24" cy="22" r="2" fill="var(--accent)"/>
+          <circle cx="42" cy="40" r="2" fill="var(--accent)"/>
+        </svg>
+      </div>
       <div class="big">Rest Day</div>
       <div class="sub">No session scheduled today. Recovery is part of the program too — muscle grows during rest, not just under the bar.</div>
       <button class="log-anyway" id="logAnywayBtn">Log a session anyway</button>
@@ -1225,17 +1386,27 @@
 
   <div id="progressView" style="display:none">
     <div class="metrics-card">
-      <h3>Consistency — Last 4 Weeks</h3>
+      <div class="streak-header">
+        <h3 style="margin-bottom:0">Consistency — Last 4 Weeks</h3>
+        <div class="streak-flame-badge" id="streakFlameBadge">
+          <span class="icon-inline" style="width:15px;height:15px;color:#E8542A"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c1 1 1.5 2.5 1.5 4a5.5 5.5 0 0 1-11 0C6.5 8.5 10 7 12 2z"/></svg></span>
+          <span id="streakCount">0</span>
+        </div>
+      </div>
       <div id="streakCalendar" class="streak-calendar"></div>
       <div class="streak-legend">
         <span><i class="streak-dot trained"></i> Trained</span>
         <span><i class="streak-dot missed"></i> Scheduled, missed</span>
         <span><i class="streak-dot rest"></i> Rest day</span>
       </div>
+      <div class="milestone-row" id="milestoneRow"></div>
     </div>
 
     <div class="metrics-card">
-      <h3>Log Body Metrics</h3>
+      <h3 style="display:flex; align-items:center; gap:7px">
+        <span class="icon-inline" style="width:15px;height:15px;color:var(--text-muted)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="12" r="4"/><path d="M12 8v1M12 15v1M8 12h1M15 12h1"/></svg></span>
+        Log Body Metrics
+      </h3>
       <div class="metrics-grid">
         <div class="full">
           <label>Body Weight (kg)</label>
@@ -1326,25 +1497,25 @@
 
       <div class="summary-grid">
         <div class="summary-item">
-          <div class="label">Calories</div>
+          <div class="label"><span class="macro-dot" style="background:var(--accent)">K</span>Calories</div>
           <div class="value" id="sumCals">0</div>
           <div class="target">Target 3000–3200</div>
           <div class="bar-track"><div class="bar-fill" id="barCals" style="width:0%"></div></div>
         </div>
         <div class="summary-item">
-          <div class="label">Protein</div>
+          <div class="label"><span class="macro-dot" style="background:var(--accent)">P</span>Protein</div>
           <div class="value" id="sumProtein">0g</div>
           <div class="target">Target 140–160g</div>
           <div class="bar-track"><div class="bar-fill" id="barProtein" style="width:0%"></div></div>
         </div>
         <div class="summary-item">
-          <div class="label">Carbs</div>
+          <div class="label"><span class="macro-dot" style="background:#D97706">C</span>Carbs</div>
           <div class="value" id="sumCarbs">0g</div>
           <div class="target">Target 380–430g</div>
           <div class="bar-track"><div class="bar-fill" id="barCarbs" style="width:0%"></div></div>
         </div>
         <div class="summary-item">
-          <div class="label">Fat</div>
+          <div class="label"><span class="macro-dot" style="background:#DC2626">F</span>Fat</div>
           <div class="value" id="sumFat">0g</div>
           <div class="target">Target 80–95g</div>
           <div class="bar-track"><div class="bar-fill" id="barFat" style="width:0%"></div></div>
@@ -1355,13 +1526,13 @@
         <div class="micro-section-title">Micros</div>
         <div class="summary-grid">
           <div class="summary-item">
-            <div class="label">Fiber</div>
+            <div class="label"><span class="macro-dot" style="background:var(--success)">Fi</span>Fiber</div>
             <div class="value" id="sumFiber">0g</div>
             <div class="target">Target 30–38g</div>
             <div class="bar-track"><div class="bar-fill" id="barFiber" style="width:0%"></div></div>
           </div>
           <div class="summary-item">
-            <div class="label">Sodium</div>
+            <div class="label"><span class="macro-dot" style="background:var(--text-muted)">Na</span>Sodium</div>
             <div class="value" id="sumSodium">0mg</div>
             <div class="target" id="sodiumTarget">Keep under 2300mg</div>
             <div class="bar-track"><div class="bar-fill" id="barSodium" style="width:0%"></div></div>
@@ -1415,7 +1586,7 @@
 </div>
 
 <button class="coach-fab" id="coachFab">
-  <span class="coach-fab-icon">💬</span>
+  <span class="coach-fab-icon"><svg viewBox="0 0 24 24" fill="white"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg></span>
   <span class="coach-fab-badge" id="coachBadge" style="display:none">0</span>
 </button>
 
@@ -1424,7 +1595,7 @@
     <div class="coach-panel-title">
       <span class="coach-dot"></span> Coach
     </div>
-    <button class="coach-close" id="coachCloseBtn">✕</button>
+    <button class="coach-close" id="coachCloseBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:13px;height:13px"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
   </div>
   <div class="coach-messages" id="coachMessages">
     <div class="coach-msg assistant">
@@ -1441,12 +1612,115 @@
 // ==== CONFIG ====
 const API_URL = "https://script.google.com/macros/s/AKfycbzoAopZn1rHAJcAfGgYxY64E1wxI-UQskitkmO9BnpOMCT95LeTtFNfL92TCRcDp5u5ig/exec";
 
+// Branded SVG icon set — replaces emoji/plain-text glyphs throughout the app
+// (checkmarks, trash icons, trophy, flame, etc.) with icons that match the
+// PlateStack palette exactly and scale crisply at any size.
+const ICONS = {
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>`,
+  trophy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H4a3 3 0 0 0 3 5"/><path d="M17 5h3a3 3 0 0 1-3 5"/><path d="M12 13v3"/><path d="M9 20h6"/><path d="M10 16.5h4l.5 3.5h-5z"/></svg>`,
+  flame: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c1 1 1.5 2.5 1.5 4a5.5 5.5 0 0 1-11 0C6.5 8.5 10 7 12 2z"/></svg>`,
+  star: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.8L5.8 21l1.6-7L2 9.2l7.1-.6z"/></svg>`,
+  avatar: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>`,
+  scale: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="12" cy="12" r="4"/><path d="M12 8v1M12 15v1M8 12h1M15 12h1"/></svg>`,
+  gear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V20a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H4a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3H10a1.7 1.7 0 0 0 1-1.6V4a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9V10a1.7 1.7 0 0 0 1.6 1H20a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1z"/></svg>`,
+  restIllustration: `<svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="26" stroke="currentColor" stroke-opacity="0.25" stroke-width="3"/><path d="M20 34c2-10 8-16 12-16s3 8-2 12 6 4 8-2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/><circle cx="24" cy="24" r="2" fill="currentColor"/><circle cx="40" cy="40" r="2" fill="currentColor"/></svg>`,
+  emptyBox: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16l18-8 18 8-18 8-18-8z"/><path d="M6 16v16l18 8 18-8V16"/><path d="M24 24v16"/></svg>`
+};
+
+function iconSpan(name, size, color, cls){
+  cls = cls || '';
+  color = color || 'currentColor';
+  return `<span class="icon-inline ${cls}" style="width:${size}px;height:${size}px;color:${color};display:inline-flex">${ICONS[name]}</span>`;
+}
+
 const BIG_LIFTS = [
   "Smith flat bench press", "Hex bar deadlift", "Smith squat",
   "Smith incline press", "Hex bar Romanian deadlift"
 ];
 const REST_BIG = 150;   // 2.5 min
 const REST_SMALL = 75;  // 1.25 min
+
+// Simple, exercise-specific breathing + bracing cue and safety warning —
+// matches the person's own iPhone Notes template exactly, one line each,
+// no extra steps added. Compound/brace lifts vs isolation/no-brace lifts
+// follow the same split established in that template.
+const EXERCISE_CUES = {
+  "Smith flat bench press": {
+    breath: "INASEM af \u2192 BRACE maag \u2192 UITASEM druk",
+    warning: "Elmboe 45 grade \u2014 nooit wyd soos T-vorm nie"
+  },
+  "Lat pulldown": {
+    breath: "INASEM bo \u2192 BRACE maag \u2192 UITASEM trek af",
+    warning: "Dink elmboe as hake \u2014 trek elmboe af na heupe"
+  },
+  "Seated DB shoulder press": {
+    breath: "INASEM af \u2192 BRACE maag \u2192 UITASEM druk",
+    warning: "Kop bly stil \u2014 moenie nek intrek nie"
+  },
+  "DB row": {
+    breath: "INASEM af \u2192 BRACE maag \u2192 UITASEM trek",
+    warning: "Moenie lyf draai om te help nie"
+  },
+  "Preacher curl": {
+    breath: "INASEM af \u2192 UITASEM krul \u2014 geen brace nodig",
+    warning: "Boarm plat teen kussing \u2014 lig dit nooit nie"
+  },
+  "Tricep pushdown": {
+    breath: "INASEM bo \u2192 UITASEM druk \u2014 geen brace nodig",
+    warning: "Elmboe VAS langs liggaam \u2014 beweeg nooit"
+  },
+  "Hex bar deadlift": {
+    breath: "INASEM \u2192 BRACE maag HARD \u2192 UITASEM optrek",
+    warning: "Rug moet ALTYD plat bly \u2014 nooit rond nie"
+  },
+  "Smith squat": {
+    breath: "INASEM af \u2192 BRACE maag HARD \u2192 UITASEM opstaan",
+    warning: "Knie\u00eb NOOIT na binne \u2014 druk hulle buite uit"
+  },
+  "Leg extension": {
+    breath: "INASEM af \u2192 UITASEM strek \u2014 geen brace nodig",
+    warning: "Knyp kwadriseps 1 sekonde bo"
+  },
+  "Leg curl": {
+    breath: "INASEM af \u2192 UITASEM krul \u2014 geen brace nodig",
+    warning: "Heupe PLAT teen bank \u2014 lig hulle nooit nie"
+  },
+  "Calf raise": {
+    breath: "INASEM af \u2192 UITASEM opstaan \u2014 geen brace nodig",
+    warning: "Stadig af \u2014 die negatief is waar kuite groei"
+  },
+  "Smith incline press": {
+    breath: "INASEM af \u2192 BRACE maag \u2192 UITASEM druk",
+    warning: "Elmboe 45 grade \u2014 nooit wyd soos T-vorm nie"
+  },
+  "Low cable seated row": {
+    breath: "INASEM vorentoe \u2192 BRACE maag \u2192 UITASEM trek",
+    warning: "Sit regop \u2014 moenie agtertoe leun nie"
+  },
+  "Dips": {
+    breath: "INASEM af \u2192 BRACE maag \u2192 UITASEM druk",
+    warning: "Stop by 90 grade \u2014 dieper = skouerbessering"
+  },
+  "Face pulls": {
+    breath: "INASEM vorentoe \u2192 UITASEM trek \u2014 geen brace nodig",
+    warning: "Elmboe wyd en hoog \u2014 knyp agterste skouers"
+  },
+  "Cable lateral raise": {
+    breath: "INASEM af \u2192 UITASEM lig \u2014 geen brace nodig",
+    warning: "Pinky kant effens ho\u00ebr as duim bo"
+  },
+  "DB hammer curl": {
+    breath: "INASEM af \u2192 UITASEM krul \u2014 geen brace nodig",
+    warning: "Elmboe VAS langs liggaam \u2014 beweeg nooit"
+  },
+  "Hex bar Romanian deadlift": {
+    breath: "INASEM \u2192 BRACE maag HARD \u2192 UITASEM heupe vorentoe",
+    warning: "Rug rond = jy gaan te diep \u2014 stop ho\u00ebr"
+  }
+};
+
 
 const DAY_MAP = { 2: "Upper A", 3: "Lower A", 4: "Upper B", 5: "Lower B" };
 const DAY_FULL_NAME = {
@@ -1501,17 +1775,24 @@ document.getElementById('logAnywayBtn').addEventListener('click', () => {
 
 async function loadWorkout(){
   const dayLabel = document.getElementById('dayLabel');
+  const categoryBadge = document.getElementById('categoryBadge');
   const isPreview = currentDay !== REAL_TODAY_DAY;
   const dateStr = new Date().toDateString();
 
   if(currentDay === "Rest"){
     dayLabel.textContent = isPreview ? "REST DAY (PREVIEW)" : "REST DAY · " + dateStr;
+    categoryBadge.style.display = 'none';
     document.getElementById('restDayMsg').style.display = 'block';
     loadWeeklySummary();
     return;
   }
 
   dayLabel.textContent = currentDay.toUpperCase() + (isPreview ? " (PREVIEW)" : " · " + dateStr);
+
+  const isUpper = currentDay.startsWith('Upper');
+  categoryBadge.textContent = isUpper ? 'UPPER BODY' : 'LOWER BODY';
+  categoryBadge.className = 'category-badge' + (isUpper ? '' : ' lower');
+  categoryBadge.style.display = 'inline-block';
 
   const res = await fetch(`${API_URL}?day=${encodeURIComponent(currentDay)}`);
   const exercises = await res.json();
@@ -1528,15 +1809,20 @@ async function loadWeeklySummary(){
     const volumeLine = s.volumeChangePct === null
       ? `Total volume: ${s.volumeThisWeek.toLocaleString()}kg`
       : `Volume ${s.volumeChangePct >= 0 ? '+' : ''}${s.volumeChangePct}% vs last week`;
+    const perfectWeek = s.sessionsThisWeek >= 4;
 
     slot.innerHTML = `
       <div class="weekly-summary">
-        <div class="weekly-summary-title">This Week</div>
+        <div class="weekly-summary-title">
+          This Week
+          ${perfectWeek ? `<span class="icon-inline" style="width:13px;height:13px;color:#D4A017;margin-left:5px">${ICONS.star}</span>` : ''}
+        </div>
         <div class="weekly-stat-row">
           <div class="weekly-stat"><div class="wsval">${s.sessionsThisWeek}/4</div><div class="wslabel">Sessions</div></div>
           <div class="weekly-stat"><div class="wsval">${s.avgProteinPerDay}g</div><div class="wslabel">Avg protein/day</div></div>
         </div>
         <div class="weekly-volume-line">${volumeLine}</div>
+        ${perfectWeek ? `<div class="perfect-week-note">Perfect week — all 4 sessions logged.</div>` : ''}
       </div>
     `;
   } catch(err){
@@ -1576,14 +1862,18 @@ async function renderExercises(exercises){
       <div class="exercise-target">${ex.targetSets} × ${ex.repLow}-${ex.repHigh}</div>`;
     card.appendChild(head);
 
-    // Breathing/bracing cue — compound lifts get the full brace sequence,
-    // isolation work just needs the exhale-on-the-hard-part rule.
+    // Breathing + bracing cue, always visible — one line, exactly matching
+    // the person's own iPhone Notes template (no extra steps added in).
+    const cuesData = EXERCISE_CUES[ex.exercise];
     const breathRow = document.createElement('div');
     breathRow.className = 'breath-cue';
-    if(BIG_LIFTS.includes(ex.exercise)){
-      breathRow.innerHTML = `<span class="breath-icon">🫁</span> <strong>INASEM</strong> → <strong>OPHOU</strong> → <strong>BRACE</strong> maag → <strong>BEWEEG</strong> → <strong>UITASEM</strong> op swaar deel`;
+    if(cuesData){
+      breathRow.innerHTML = `
+        <div class="breath-line"><span class="lung-icon">🫁</span> ${cuesData.breath}</div>
+        ${cuesData.warning ? `<div class="breath-warning">⚠️ ${cuesData.warning}</div>` : ''}
+      `;
     } else {
-      breathRow.innerHTML = `<span class="breath-icon">🫁</span> Uitasem op die harde deel — geen bracing nodig nie`;
+      breathRow.innerHTML = `<div class="breath-line">No breathing cue saved for this exercise yet.</div>`;
     }
     card.appendChild(breathRow);
 
@@ -1603,7 +1893,7 @@ async function renderExercises(exercises){
         <div class="set-num">${i}</div>
         <input type="text" placeholder="kg" class="w-input" inputmode="decimal">
         <input type="text" placeholder="reps" class="r-input" inputmode="numeric">
-        <button class="log-btn">✓</button>
+        <button class="log-btn">${iconSpan('check', 20)}</button>
       `;
       const btn = row.querySelector('.log-btn');
       btn.addEventListener('click', () => logSet(ex, i, row));
@@ -1713,7 +2003,7 @@ async function logSet(ex, setNum, row){
     });
   } catch(err){
     disableAllLogButtons(false);
-    btn.innerHTML = '✓';
+    btn.innerHTML = iconSpan('check', 20);
     flashToast("Couldn't log that set — check your connection", "error");
     return;
   }
@@ -1729,7 +2019,7 @@ async function logSet(ex, setNum, row){
   const isPR = ctx && weightNum > (ctx.allTimeMax || 0);
   if(isPR){
     if(ctx) ctx.allTimeMax = weightNum;
-    flashToast(`🏆 New PR on ${ex.exercise} — ${weightNum}kg!`, 'pr');
+    flashToast(`New PR on ${ex.exercise} — ${weightNum}kg!`, 'pr');
   } else {
     flashToast("Set logged");
   }
@@ -1769,7 +2059,13 @@ function flashToast(msg, type){
   t.className = 'toast' + (type === 'error' ? ' error' : type === 'pr' ? ' pr' : '');
   const icon = document.createElement('div');
   icon.className = 'toast-icon';
-  icon.textContent = type === 'error' ? '!' : type === 'pr' ? '🏆' : '✓';
+  if(type === 'error'){
+    icon.textContent = '!';
+  } else if(type === 'pr'){
+    icon.innerHTML = `<span style="width:11px;height:11px;display:inline-flex">${ICONS.trophy}</span>`;
+  } else {
+    icon.innerHTML = `<span style="width:11px;height:11px;display:inline-flex">${ICONS.check}</span>`;
+  }
   const msgEl = document.createElement('span');
   msgEl.textContent = msg;
   t.appendChild(icon);
@@ -1796,7 +2092,7 @@ async function withButtonFeedback(btn, action, opts){
   try{
     await action();
     btn.classList.add('btn-success-flash');
-    btn.innerHTML = '✓ ' + successText;
+    btn.innerHTML = iconSpan('check', 14, 'currentColor', 'btn-inline-icon') + ' ' + successText;
     setTimeout(() => {
       btn.classList.remove('btn-success-flash');
       btn.innerHTML = originalHTML;
@@ -1805,7 +2101,7 @@ async function withButtonFeedback(btn, action, opts){
     return true;
   } catch(err){
     btn.classList.add('btn-error-flash');
-    btn.innerHTML = '✗ Failed';
+    btn.innerHTML = iconSpan('close', 14, 'currentColor', 'btn-inline-icon') + ' Failed';
     setTimeout(() => {
       btn.classList.remove('btn-error-flash');
       btn.innerHTML = originalHTML;
@@ -2086,7 +2382,7 @@ async function loadTodaySummary(){
     textSpan.innerHTML = `${e.foodName} (${e.grams}g) — <span style="color:var(--text)">${Math.round(e.calories)} kcal · ${Math.round(e.protein)}g protein</span>`;
     const delBtn = document.createElement('button');
     delBtn.className = 'delete-x';
-    delBtn.textContent = '✕';
+    delBtn.innerHTML = iconSpan('trash', 13);
     delBtn.title = 'Remove this entry';
     delBtn.addEventListener('click', async () => {
       const proceed = await showConfirm("Remove entry?", `Delete "${e.foodName}" from today's log? This can't be undone.`);
@@ -2120,7 +2416,10 @@ async function loadMyMeals(){
   list.innerHTML = '';
 
   if(meals.length === 0){
-    list.innerHTML = '<div class="empty-chart">No saved meals yet — add your regulars below</div>';
+    list.innerHTML = `<div class="empty-illustration">
+      <span class="icon-inline" style="width:38px;height:38px;color:var(--border)">${ICONS.emptyBox}</span>
+      <div class="empty-chart" style="padding-top:8px">No saved meals yet — add your regulars below</div>
+    </div>`;
     return;
   }
 
@@ -2137,7 +2436,7 @@ async function loadMyMeals(){
         </div>
         <div class="meal-row-actions">
           <button class="log-toggle-btn">Log</button>
-          <button class="delete-x">✕</button>
+          <button class="delete-x">${iconSpan('trash', 13)}</button>
         </div>
       </div>
     `;
@@ -2194,7 +2493,7 @@ async function loadMyMeals(){
               source: 'My Meals'
             })
           });
-        }, { loadingText:'', successText:'✓' });
+        }, { loadingText:'', successText:'Done' });
 
         flashToast(`${m.name} logged — ${gramsEaten}g, ${scaled.calories}kcal`);
         prompt.remove();
@@ -2295,13 +2594,14 @@ function loadProgressView(){
 async function loadStreakCalendar(){
   const el = document.getElementById('streakCalendar');
   el.innerHTML = '';
-  let trainedDates;
+  let trainedDatesArr = [];
   try{
     const res = await fetch(`${API_URL}?action=workoutdates`);
-    trainedDates = new Set(await res.json());
+    trainedDatesArr = await res.json();
   } catch(err){
-    trainedDates = new Set();
+    trainedDatesArr = [];
   }
+  const trainedDates = new Set(trainedDatesArr);
 
   const days = 28;
   const cells = [];
@@ -2339,6 +2639,34 @@ async function loadStreakCalendar(){
     div.title = c.iso;
     el.appendChild(div);
   });
+
+  // Current streak: count backwards from today/yesterday through consecutive
+  // scheduled training days that were actually trained, stopping at the
+  // first scheduled-but-missed day.
+  let streak = 0;
+  for(let i = 0; i < 60; i++){
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const weekday = d.getDay();
+    const isScheduled = weekday >= 2 && weekday <= 5;
+    if(!isScheduled) continue;
+    const iso = d.toISOString().slice(0,10);
+    if(trainedDates.has(iso)) streak++;
+    else break;
+  }
+  document.getElementById('streakCount').textContent = streak;
+
+  // Milestone badges — based on total logged sessions within the tracked window
+  const milestoneRow = document.getElementById('milestoneRow');
+  const totalSessions = trainedDatesArr.length;
+  const milestones = [10, 25, 50];
+  milestoneRow.innerHTML = milestones.map(m => {
+    const earned = totalSessions >= m;
+    return `<div class="milestone-badge ${earned ? 'earned' : ''}">
+      <span class="icon-inline" style="width:16px;height:16px">${ICONS.star}</span>
+      <span>${m}</span>
+    </div>`;
+  }).join('');
 }
 
 // ==== Save body metrics ====
