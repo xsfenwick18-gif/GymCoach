@@ -91,7 +91,7 @@
     color:#FFFFFF;
     text-shadow:0 2px 10px rgba(0,0,0,0.12);
   }
-  .wordmark span{color:var(--success);}
+  .wordmark span{color:#FBBF24;}
   .day-label-row{
     margin-top:6px;
     display:flex;
@@ -875,6 +875,23 @@
     font-size:14px;
   }
   .next-up b{color:var(--text); font-family:'Oswald',sans-serif; letter-spacing:0.5px;}
+  .skip-rest-btn{
+    margin-top:28px;
+    background:none;
+    border:1.5px solid var(--border);
+    color:var(--text-muted);
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    padding:12px 22px;
+    border-radius:24px;
+    cursor:pointer;
+    transition:all 0.15s;
+  }
+  .skip-rest-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .skip-rest-btn:active{transform:scale(0.96);}
 
   /* Nav tabs */
   .nav-tabs{
@@ -1594,6 +1611,7 @@
     </div>
   </div>
   <div class="next-up" id="nextUp"></div>
+  <button class="skip-rest-btn" id="skipRestBtn">Skip Rest — I'm Ready</button>
 </div>
 
 <div class="toast-stack" id="toastStack"></div>
@@ -2165,6 +2183,8 @@ function disableAllLogButtons(state){
 
 // ==== Rest timer ====
 const CIRC = 2 * Math.PI * 95; // 596.9
+let currentRestInterval = null;
+
 function startRestTimer(seconds, ex, setNum){
   const overlay = document.getElementById('restOverlay');
   const ring = document.getElementById('ringProgress');
@@ -2178,6 +2198,16 @@ function startRestTimer(seconds, ex, setNum){
   ring.style.strokeDasharray = CIRC;
   ring.style.strokeDashoffset = 0;
 
+  const finishRest = (skipped) => {
+    if(currentRestInterval){
+      clearInterval(currentRestInterval);
+      currentRestInterval = null;
+    }
+    overlay.classList.remove('active');
+    disableAllLogButtons(false);
+    flashToast(skipped ? "Rest skipped — go get it" : "Rest done — next set");
+  };
+
   const tick = () => {
     const pct = remaining / seconds;
     ring.style.strokeDashoffset = CIRC * (1 - pct);
@@ -2186,16 +2216,16 @@ function startRestTimer(seconds, ex, setNum){
     timeEl.textContent = `${m}:${s.toString().padStart(2,'0')}`;
 
     if(remaining <= 0){
-      clearInterval(interval);
-      overlay.classList.remove('active');
-      disableAllLogButtons(false);
-      flashToast("Rest done — next set");
+      finishRest(false);
       return;
     }
     remaining--;
   };
   tick();
-  const interval = setInterval(tick, 1000);
+  currentRestInterval = setInterval(tick, 1000);
+
+  const skipBtn = document.getElementById('skipRestBtn');
+  skipBtn.onclick = () => finishRest(true);
 }
 
 // ==== Finish workout ====
