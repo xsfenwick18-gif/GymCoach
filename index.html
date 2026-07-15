@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PlateStack</title>
+<title>GymFanatic</title>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
-<meta property="og:title" content="PlateStack">
+<meta property="og:title" content="GymFanatic">
 <meta property="og:description" content="Progressive overload, visualized.">
 <meta property="og:image" content="social-share.png">
 <meta property="og:type" content="website">
@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="PlateStack">
+<meta name="apple-mobile-web-app-title" content="GymFanatic">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -1335,7 +1335,7 @@
 <body>
 
 <header>
-  <div class="wordmark">PLATE<span>STACK</span></div>
+  <div class="wordmark">GYM<span>FANATIC</span></div>
   <div class="day-label-row">
     <div class="day-label" id="dayLabel">Loading...</div>
     <span class="category-badge" id="categoryBadge" style="display:none"></span>
@@ -1599,7 +1599,7 @@
   </div>
   <div class="coach-messages" id="coachMessages">
     <div class="coach-msg assistant">
-      <div class="coach-bubble">Hey — I'll comment on your sets as you log them. Ask me anything about weight, reps, or how a set felt.</div>
+      <div class="coach-bubble">Hey — I'll comment on your sets as you log them. Ask me about rest, RIR, form, adding weight, nutrition, sleep, plateaus, or missed sessions — I'll give you a straight answer.</div>
     </div>
   </div>
   <div class="coach-input-row">
@@ -1614,7 +1614,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzoAopZn1rHAJcAfGgYxY64
 
 // Branded SVG icon set — replaces emoji/plain-text glyphs throughout the app
 // (checkmarks, trash icons, trophy, flame, etc.) with icons that match the
-// PlateStack palette exactly and scale crisply at any size.
+// GymFanatic palette exactly and scale crisply at any size.
 const ICONS = {
   check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>`,
   trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></svg>`,
@@ -2776,11 +2776,11 @@ function drawLineChart(canvasId, points, unit){
 }
 
 // ==== In-App Coach ====
-const COACH_SYSTEM_PROMPT = `You are the in-app coach for PlateStack, a personal bodybuilding app. You are coaching the person using it: restarting training as a motivated beginner, aggressive lean bulk, goal is muscle size (hypertrophy) first — strength is a byproduct. Bodybuilding approach, not powerlifting.
-
-Rules they follow: 1-2 reps in reserve (RIR) on every set. Rest between sets is enforced automatically by the app's own timer (2-3 min on big compound lifts, 1-1.5 min on isolation) — you never need to comment on whether rest was long enough, it's handled by the app itself. Add weight once the top of the rep range is hit across all sets. Keep roughly a 45 degree elbow angle on pressing movements.
-
-Your job: react to each set as it's logged. Say plainly whether the weight/reps look right for the target rep range, whether it's progress from last session, and flag anything worth flagging (e.g. reps below range might mean too heavy, reps way above range might mean too light). Keep replies to 2-3 short sentences — this is read mid-workout between sets, not an essay. Lead with the verdict, then a brief reason. Use simple, everyday analogies when explaining a new idea. Be direct and encouraging, never fake-hype ("AMAZING!" style is banned) — matter-of-fact and warm, like a real coach standing next to the rack. If asked a free-form question, answer the same way: short, direct, practical.`;
+// Runs entirely locally — no external API calls, no cost, never "offline".
+// (An earlier version tried calling Claude directly from the page, which
+// only works inside Claude.ai itself, not on a real deployed site like
+// GitHub Pages — that's why it kept failing. This version is rule-based
+// and always responds instantly.)
 
 let coachHistory = [];
 
@@ -2852,6 +2852,167 @@ function trimCoachHistory(){
   if(coachHistory.length > 20) coachHistory.splice(0, coachHistory.length - 20);
 }
 
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+// Builds a short, varied coaching line reacting to a just-logged set —
+// compares reps against the target range and weight against last session.
+function buildSetFeedback(ex, setNum, weight, reps, isPR, lastSet){
+  const parts = [];
+
+  if(isPR){
+    parts.push(pick([
+      `New best on ${ex.exercise} — ${weight}kg is your heaviest yet.`,
+      `That's a PR on ${ex.exercise}. ${weight}kg is a new high for you here.`
+    ]));
+  }
+
+  if(reps < ex.repLow){
+    parts.push(pick([
+      `${reps} reps is under your ${ex.repLow}-${ex.repHigh} target — if form held up, the weight's a touch heavy today. Still counts.`,
+      `That's below range (${ex.repLow}-${ex.repHigh}). Not a problem once in a while, but keep an eye on it next set.`
+    ]));
+  } else if(reps > ex.repHigh){
+    parts.push(pick([
+      `${reps} reps is above your ${ex.repHigh} target — good sign to add weight next session.`,
+      `You're past the top of the range there. Time to load up a bit more next time.`
+    ]));
+  } else {
+    parts.push(pick([
+      `Right in your ${ex.repLow}-${ex.repHigh} target.`,
+      `Good — that's within range.`,
+      `Solid, right where you want to be.`
+    ]));
+  }
+
+  if(lastSet){
+    if(weight > lastSet.weight){
+      parts.push(pick([
+        `Up from ${lastSet.weight}kg last time — that's progress.`,
+        `Nice, ${weight}kg beats the ${lastSet.weight}kg from last session.`
+      ]));
+    } else if(weight === lastSet.weight){
+      parts.push(pick([
+        `Same weight as last time — try to squeeze an extra rep next set.`,
+        `Matched last session's ${weight}kg. Push for one more rep if you can.`
+      ]));
+    } else {
+      parts.push(pick([
+        `A bit lighter than the ${lastSet.weight}kg last time — everyone has off days, don't stress it.`,
+        `Down from ${lastSet.weight}kg last session — how's the energy today? Adjust as needed.`
+      ]));
+    }
+  } else if(!isPR){
+    parts.push(`No history yet for this one — this becomes your baseline to beat next time.`);
+  }
+
+  return parts.join(' ');
+}
+
+// Lightweight keyword-matched FAQ for the free-text input — covers the
+// questions people actually ask mid-workout, without needing a live model.
+// Checked in order top to bottom, so more specific patterns sit above more
+// general ones that might otherwise catch them first.
+const COACH_FAQ_RULES = [
+  // --- injury / pain (specific before general) ---
+  { test: /wrist|grip.*(hurt|pain|sore)/, reply:
+    "Wrist or grip pain is usually a bar-path or wrist-angle issue — try keeping the bar more in your palm than your fingers, and wrists stacked straight over your elbows on presses. If it persists, that's worth getting checked rather than pushing through." },
+  { test: /elbow|45\s*(deg|°)?|degree/, reply:
+    "On pressing movements (bench, incline, shoulder press), keep your elbows at roughly a 45° angle from your torso — not flared out to 90° like a T-shape. That's the cue tied to your earlier elbow recovery." },
+  { test: /sore|pain|hurt|ache|injur/, reply:
+    "Normal muscle soreness a day or two after training is expected. Sharp pain, joint pain, or anything that changes your movement is different — stop the exercise and don't push through it. When in doubt, ask a real person (doctor, physio) about anything that actually hurts." },
+
+  // --- set execution ---
+  { test: /rir|reps in reserve|failure/, reply:
+    "You're training at 1-2 RIR — meaning you stop with 1-2 reps still left in the tank, not grinding to failure. If you could've done 3+ more reps, the set was too light; if you couldn't finish the reps with good form, it was too heavy." },
+  { test: /too heavy|too much weight|drop.*weight|lower.*weight/, reply:
+    "If you're missing the bottom of your rep range (under 8, for most of your lifts), the weight's likely too heavy for today — knock it down slightly and keep form tight." },
+  { test: /too light|too easy/, reply:
+    "If you're blowing past the top of your rep range with reps to spare, it's time to add weight — that's exactly the rule you already follow: top of range across all sets means load up next session." },
+  { test: /couldn'?t finish|failed.*(rep|set)|missed.*(rep|reps)/, reply:
+    "If you don't hit the bottom of the rep range, log what you actually got — don't round up. Next time either repeat the weight and aim to beat it, or drop it slightly if it felt like a total grind rather than just hard." },
+  { test: /tempo|how fast|speed of the rep|slow down|lowering/, reply:
+    "Control the weight down (2-3 seconds), then drive it up with intent. Don't rush the lowering part — that's actually where a lot of the muscle-building tension happens, especially on calf raises and curls." },
+  { test: /brace|bracing/, reply:
+    "Bracing (tightening your core before the hard part) is for the heavy compound lifts — squat, deadlift, bench, press, row, dips. Isolation work like curls or leg extensions doesn't need it — just breathe naturally through the rep." },
+  { test: /warm.?up/, reply:
+    "Warm up your first exercise each day with 1-2 light sets before your working weight — light meaning you could do way more reps than the target range. Nothing extra needed for exercises after the first one; you're already warm." },
+  { test: /how.*(is my|does my) form|check my form|watching me|see me lift/, reply:
+    "I can't actually see you lift, so I can't judge form directly — but the warning line under each exercise's breathing cue flags the most common mistake for that specific movement. Film yourself from the side if you want a real check." },
+
+  // --- programming / progression ---
+  { test: /add weight|progress(ion)?|increase weight|when.*(add|go up)/, reply:
+    "Add weight once you hit the top of your rep range across every set for that exercise. Not before — let the reps earn the extra weight." },
+  { test: /progressive overload|what is overload/, reply:
+    "Progressive overload just means doing a little more over time — more weight, more reps, or both. That's the whole game: beat one number from last time, every session, and the muscle has no choice but to adapt." },
+  { test: /why.*(8-12|rep range)|how many reps/, reply:
+    "8-12 reps on your big lifts and higher reps (12-20) on isolation work is the classic hypertrophy range — enough tension to grow muscle without needing max-effort singles. Not magic, just a proven sweet spot." },
+  { test: /how many sets|why.*sets/, reply:
+    "Sets per exercise are set to balance enough volume to grow without wrecking recovery — usually 3-4 for compounds, 3 for isolation. Stick to the program; more isn't automatically better." },
+  { test: /plateau|stuck|not progressing|same weight for weeks/, reply:
+    "If a lift's been stuck for 2-3 sessions straight, check the basics first: are you eating enough, sleeping enough, resting properly between sets? If all that's solid, it's normal to repeat a weight a few sessions before it finally moves — that's not failure." },
+  { test: /what.*(muscle|does).*work|which muscles/, reply:
+    "Each day in your program targets a specific area — Upper A/B hit chest, back, shoulders and arms; Lower A/B hit quads, hamstrings, glutes and calves. Twice a week each, which is ideal for growth at your level." },
+
+  // --- schedule / consistency ---
+  { test: /rest is handled|how long.*(set|between|rest)|rest time|break between/, reply:
+    "Rest is handled automatically — the timer runs 2.5 min after big compound lifts and 1.25 min after isolation work. You can't log the next set until it's done, so that part's already covered for you." },
+  { test: /missed?.*(day|session|workout)|skip(ped)?.*(day|session)/, reply:
+    "One missed session isn't a big deal — just pick up on your next scheduled day, don't try to cram two workouts into one to 'catch up'. Consistency over weeks matters far more than any single session." },
+  { test: /train.*(tomorrow|different day)|move.*(workout|session)|reschedule/, reply:
+    "You can shift a session to a different day if life gets in the way — just try to keep at least one rest day between sessions hitting the same muscles, so you're not training sore." },
+  { test: /rest day|why rest|recovery day/, reply:
+    "Rest days aren't wasted time — muscle actually grows during recovery, not during the workout itself. Monday and weekends are built into your split on purpose." },
+  { test: /don'?t feel like|no motivation|too tired to train|skip today/, reply:
+    "Some days you won't feel like it — showing up and doing a lighter version of the session still beats skipping entirely. If you're truly exhausted or unwell, rest is the right call; if it's just low motivation, get started and it usually fades." },
+  { test: /best time to train|morning or evening|when should i train/, reply:
+    "Whatever time you'll actually show up consistently is the best time — consistency beats any theoretical 'optimal' hour." },
+
+  // --- nutrition / recovery ---
+  { test: /supplement|whey|protein powder|shake/, reply:
+    "Your USN Bluelab Whey with full cream milk is a solid way to hit your protein target — but it's a supplement, meaning it supplements real food, not replaces it. Whole food first, shake to fill gaps." },
+  { test: /sleep/, reply:
+    "Sleep is when most of your recovery and muscle growth actually happens — aim for 7-9 hours. No app setting substitutes for it." },
+  { test: /gaining.*too (fast|slow)|weight gain rate|how much.*gain|lean bulk/, reply:
+    "Target is 0.5-1kg a month. Faster than that and you're likely overeating (more fat than muscle); slower and you might be undereating. Your body weight trend over a few weeks tells you which way to adjust." },
+  { test: /cardio|running|treadmill/, reply:
+    "Cardio isn't part of this program — the focus right now is muscle size on a lean bulk, and too much cardio can eat into recovery and the calorie surplus you need to grow. Light walking is fine; save serious cardio for later." },
+  { test: /water|hydrat/, reply:
+    "Water isn't specifically tracked in this app, but staying hydrated helps performance and recovery — a decent rule of thumb is drinking enough that you're rarely very thirsty." },
+  { test: /stretch|mobility|flexib/, reply:
+    "A little stretching or mobility work post-workout doesn't hurt, but it's not a required part of this program — priority is the lifting and the food." },
+
+  // --- progress tracking ---
+  { test: /how long.*(see|results|noticeable)|when will i see/, reply:
+    "Visible changes usually start showing around 6-8 weeks of consistent training and eating, though strength gains often show sooner. The weekly weight trend and progress photos tell the story better than the mirror day-to-day." },
+  { test: /measurements mean|why track measurements|chest.*waist/, reply:
+    "Measurements catch changes the scale misses — like gaining muscle while your waist stays the same, which the bodyweight number alone won't show you." },
+  { test: /scale.*(fluctuat|jump|different)|weight.*(changes daily|different every day|jump)/, reply:
+    "Day-to-day scale swings are mostly water and food in your system, not real fat or muscle change. Look at the weekly trend, not any single morning's number." },
+
+  // --- conversational ---
+  { test: /thanks|thank you|cheers|appreciate/, reply:
+    "Anytime — go get your next set." },
+  { test: /bye|see ya|later|done for today/, reply:
+    "Nice work today. See you next session." },
+  { test: /^hi$|^hello$|^hey$|^sup$|how are you/, reply:
+    "Hey! Ask me about rest times, RIR, form cues, adding weight, nutrition, or whether a set looked right — I'll give you a straight answer." }
+];
+
+function matchCoachFAQ(text){
+  const t = text.toLowerCase();
+  for(const rule of COACH_FAQ_RULES){
+    if(rule.test.test(t)) return rule.reply;
+  }
+  return null;
+}
+
+function renderCoachTextResponse(text){
+  hideCoachTyping();
+  coachHistory.push({ role: 'assistant', content: text });
+  trimCoachHistory();
+  renderCoachMessage('assistant', text);
+}
+
 async function sendToCoach(userText, opts){
   opts = opts || {};
   if(!opts.silent){
@@ -2861,51 +3022,30 @@ async function sendToCoach(userText, opts){
   trimCoachHistory();
   showCoachTyping();
 
-  try{
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 300,
-        system: COACH_SYSTEM_PROMPT,
-        messages: coachHistory
-      })
-    });
-    const data = await response.json();
-    const text = (data.content || [])
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('\n')
-      .trim();
-
-    hideCoachTyping();
-    if(text){
-      coachHistory.push({ role: 'assistant', content: text });
-      trimCoachHistory();
-      renderCoachMessage('assistant', text);
-    } else {
-      renderCoachMessage('assistant', "Didn't quite catch that — try again?");
+  // Small delay so it still feels like a response is being "thought
+  // through" rather than an instant canned reply — purely cosmetic.
+  setTimeout(() => {
+    if(opts.autoFeedback){
+      renderCoachTextResponse(opts.autoFeedback);
+      return;
     }
-  } catch(err){
-    hideCoachTyping();
-    renderCoachMessage('assistant', "Coach is offline right now — your set is still logged safely.");
-  }
+    const faqMatch = matchCoachFAQ(userText);
+    if(faqMatch){
+      renderCoachTextResponse(faqMatch);
+    } else {
+      renderCoachTextResponse("I don't have an answer for that specific one — but I can help with rest times, RIR, form cues, adding weight, warm-ups, plateaus, nutrition, sleep, missed sessions, or soreness vs pain. Try rephrasing, or bring bigger questions to your regular Claude chat.");
+    }
+  }, 450 + Math.random()*350);
 }
 
-async function autoCoachComment(ex, setNum, weight, reps, isPR){
+function autoCoachComment(ex, setNum, weight, reps, isPR){
   const ctx = exerciseCache[ex.exercise];
   const lastSet = ctx && ctx.lastSession && ctx.lastSession.sets && ctx.lastSession.sets[setNum-1];
 
   addCoachContextLine(`Set ${setNum}/${ex.targetSets} · ${ex.exercise} · ${weight}kg × ${reps}`);
 
-  let contextText = `Set ${setNum} of ${ex.targetSets} on "${ex.exercise}". Target rep range: ${ex.repLow}-${ex.repHigh} at 1-2 RIR. Just logged: ${weight}kg for ${reps} reps.`;
-  contextText += lastSet
-    ? ` Same set number last session: ${lastSet.weight}kg for ${lastSet.reps} reps.`
-    : ` No prior history logged for this exercise yet.`;
-  if(isPR) contextText += ` This is a new all-time best weight for this exercise.`;
-
-  await sendToCoach(contextText, { silent: true });
+  const feedback = buildSetFeedback(ex, setNum, weight, reps, isPR, lastSet);
+  sendToCoach('', { silent: true, autoFeedback: feedback });
 }
 
 document.getElementById('coachSendBtn').addEventListener('click', sendCoachInput);
