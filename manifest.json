@@ -1,6 +1,6 @@
 {
-  "name": "Gym Fanatic",
-  "short_name": "Gym Fanatic",
+  "name": "GymCoach",
+  "short_name": "GymCoach",
   "description": "Progressive overload, visualized.",
   "start_url": "./index.html",
   "display": "standalone",
