@@ -2406,6 +2406,26 @@ function todayDate(){
   return new Date().toISOString().slice(0,10);
 }
 
+// Reverse of DAY_MAP — which weekday number each training day falls on.
+const DAY_TO_WEEKDAY = { "Upper A": 2, "Lower A": 3, "Upper B": 4, "Lower B": 5 };
+
+// Given a day type (e.g. "Upper B"), returns the date string for THAT
+// weekday within the current calendar week — not just literal today.
+// This is what lets "already completed" detection work correctly when
+// previewing Tuesday–Thursday later in the same week, and is exactly
+// what makes it reset itself automatically once that weekday rolls
+// around again next week (the computed date simply becomes a new one).
+function dateForDayThisWeek(dayType){
+  const weekday = DAY_TO_WEEKDAY[dayType];
+  if(weekday === undefined) return null;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const diff = weekday - today.getDay();
+  const target = new Date(today);
+  target.setDate(today.getDate() + diff);
+  return target.toISOString().slice(0,10);
+}
+
 // REAL_TODAY_DAY is the ground truth, computed once and never mutated —
 // it's what "Reset to today" always returns to, regardless of what's
 // been manually selected in the dropdown during this session.
@@ -2579,16 +2599,19 @@ async function renderExercises(exercises){
     list.appendChild(card);
 
     // Fetch this exercise's history in the background. If the most recent
-    // logged session is TODAY, restore those sets as already-done instead
-    // of showing empty inputs — this is what survives a refresh. The very
-    // next time this day type comes around (a different date), lastSession
-    // will no longer match today automatically, so it resets itself with
-    // no extra cleanup logic needed.
+    // logged session matches THIS WEEK'S occurrence of the day currently
+    // being viewed (works whether that's literally today or you're
+    // previewing Tue–Thu later in the week), restore those sets as
+    // already-done instead of showing empty inputs. Next week, once that
+    // weekday rolls around again, the expected date is a new one, so it
+    // resets itself automatically — no extra cleanup logic needed.
+    const expectedDate = dateForDayThisWeek(currentDay);
+    const isRealToday = currentDay === REAL_TODAY_DAY;
     const statusPromise = fetchExerciseContext(ex.exercise).then(ctx => {
       const { lastSession } = ctx;
-      const loggedToday = lastSession && lastSession.date === todayDate() && lastSession.sets.length > 0;
+      const loggedThisOccurrence = lastSession && lastSession.date === expectedDate && lastSession.sets.length > 0;
 
-      if(loggedToday){
+      if(loggedThisOccurrence){
         const rows = card.querySelectorAll('.set-row');
         lastSession.sets.forEach(s => {
           const row = rows[s.set - 1];
@@ -2598,7 +2621,8 @@ async function renderExercises(exercises){
           row.dataset.reps = s.reps;
           row.innerHTML = `<div class="set-num">${s.set}</div><div class="done-summary">${s.weight}kg × ${s.reps} — logged</div>`;
         });
-        lastTimeRow.innerHTML = `<span class="last-time-text done-today-badge">✓ Logged today</span>`;
+        const badgeLabel = isRealToday ? '✓ Logged today' : '✓ Completed this week';
+        lastTimeRow.innerHTML = `<span class="last-time-text done-today-badge">${badgeLabel}</span>`;
         checkRangeHitTip(ex, card);
         return lastSession.sets.length >= ex.targetSets;
       }
@@ -2638,18 +2662,23 @@ async function renderExercises(exercises){
 
   const results = await Promise.all(cardStatuses);
   const allDoneToday = results.length > 0 && results.every(r => r === true);
-  showTodayCompletedBanner(allDoneToday);
+  showTodayCompletedBanner(allDoneToday, currentDay === REAL_TODAY_DAY);
 }
 
-function showTodayCompletedBanner(isComplete){
+function showTodayCompletedBanner(isComplete, isRealToday){
   const existing = document.getElementById('todayCompletedBanner');
   if(existing) existing.remove();
   if(!isComplete) return;
 
+  const title = isRealToday ? "Today's workout is done." : "This session is already done.";
+  const sub = isRealToday
+    ? "All sets logged — nice work. This clears itself automatically next time this day comes around."
+    : "All sets were logged earlier this week. This clears itself automatically once this day comes around again next week.";
+
   const banner = document.createElement('div');
   banner.id = 'todayCompletedBanner';
   banner.className = 'today-completed-banner';
-  banner.innerHTML = `${iconSpan('check', 18, '#FFFFFF')} <div><strong>Today's workout is done.</strong> All sets logged — nice work. This clears itself automatically next time this day comes around.</div>`;
+  banner.innerHTML = `${iconSpan('check', 18, '#FFFFFF')} <div><strong>${title}</strong> ${sub}</div>`;
   const list = document.getElementById('exerciseList');
   list.parentNode.insertBefore(banner, list);
 }
