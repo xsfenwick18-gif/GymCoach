@@ -381,6 +381,45 @@
     color:var(--text-muted);
   }
   .last-time-text strong{color:var(--text); font-family:'JetBrains Mono',monospace;}
+  .last-time-text.done-today-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    color:var(--success);
+    font-weight:700;
+    font-family:'Oswald',sans-serif;
+    font-size:12px;
+    letter-spacing:0.3px;
+    text-transform:uppercase;
+  }
+  .today-completed-banner{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    background:linear-gradient(135deg, var(--success), #15803D);
+    color:#FFFFFF;
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:16px;
+    box-shadow:var(--shadow-md);
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    line-height:1.4;
+  }
+  .today-completed-banner .icon-inline{
+    flex-shrink:0;
+    background:rgba(255,255,255,0.2);
+    border-radius:50%;
+    padding:6px;
+  }
+  .today-completed-banner strong{
+    display:block;
+    font-family:'Oswald',sans-serif;
+    font-size:14px;
+    letter-spacing:0.3px;
+    text-transform:uppercase;
+    margin-bottom:3px;
+  }
   .last-time-head{
     display:flex;
     align-items:center;
@@ -2480,6 +2519,7 @@ async function fetchExerciseContext(exerciseName){
 async function renderExercises(exercises){
   const list = document.getElementById('exerciseList');
   list.innerHTML = '';
+  const cardStatuses = []; // tracks whether each exercise is already fully done today
 
   for(const ex of exercises){
     const card = document.createElement('div');
@@ -2538,12 +2578,34 @@ async function renderExercises(exercises){
 
     list.appendChild(card);
 
-    // Fetch this exercise's history in the background and fill in the label
-    fetchExerciseContext(ex.exercise).then(ctx => {
+    // Fetch this exercise's history in the background. If the most recent
+    // logged session is TODAY, restore those sets as already-done instead
+    // of showing empty inputs — this is what survives a refresh. The very
+    // next time this day type comes around (a different date), lastSession
+    // will no longer match today automatically, so it resets itself with
+    // no extra cleanup logic needed.
+    const statusPromise = fetchExerciseContext(ex.exercise).then(ctx => {
       const { lastSession } = ctx;
+      const loggedToday = lastSession && lastSession.date === todayDate() && lastSession.sets.length > 0;
+
+      if(loggedToday){
+        const rows = card.querySelectorAll('.set-row');
+        lastSession.sets.forEach(s => {
+          const row = rows[s.set - 1];
+          if(!row) return;
+          row.classList.add('done');
+          row.dataset.weight = s.weight;
+          row.dataset.reps = s.reps;
+          row.innerHTML = `<div class="set-num">${s.set}</div><div class="done-summary">${s.weight}kg × ${s.reps} — logged</div>`;
+        });
+        lastTimeRow.innerHTML = `<span class="last-time-text done-today-badge">✓ Logged today</span>`;
+        checkRangeHitTip(ex, card);
+        return lastSession.sets.length >= ex.targetSets;
+      }
+
       if(!lastSession || !lastSession.sets || lastSession.sets.length === 0){
         lastTimeRow.innerHTML = `<span class="last-time-text">First time logging this — no history yet.</span>`;
-        return;
+        return false;
       }
       const chipsHtml = lastSession.sets.map(s =>
         `<button class="last-set-chip" data-set="${s.set}" data-weight="${s.weight}" data-reps="${s.reps}">
@@ -2565,10 +2627,31 @@ async function renderExercises(exercises){
       lastTimeRow.querySelector('.copy-all-btn').addEventListener('click', () => {
         copyLastSession(card, lastSession.sets);
       });
+      return false;
     }).catch(() => {
       lastTimeRow.innerHTML = `<span class="last-time-text">Couldn't load history — logging still works.</span>`;
+      return false;
     });
+
+    cardStatuses.push(statusPromise);
   }
+
+  const results = await Promise.all(cardStatuses);
+  const allDoneToday = results.length > 0 && results.every(r => r === true);
+  showTodayCompletedBanner(allDoneToday);
+}
+
+function showTodayCompletedBanner(isComplete){
+  const existing = document.getElementById('todayCompletedBanner');
+  if(existing) existing.remove();
+  if(!isComplete) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'todayCompletedBanner';
+  banner.className = 'today-completed-banner';
+  banner.innerHTML = `${iconSpan('check', 18, '#FFFFFF')} <div><strong>Today's workout is done.</strong> All sets logged — nice work. This clears itself automatically next time this day comes around.</div>`;
+  const list = document.getElementById('exerciseList');
+  list.parentNode.insertBefore(banner, list);
 }
 
 function copySingleSet(card, setNum, weight, reps, chipEl){
