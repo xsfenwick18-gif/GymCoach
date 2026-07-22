@@ -537,7 +537,7 @@
   .log-btn:active:not(:disabled){transform:translateY(2px); box-shadow:0 2px 6px rgba(37,99,235,0.3);}
   .log-btn:disabled{background:var(--border); color:var(--text-muted); cursor:not-allowed; box-shadow:none;}
   .set-row.done{
-    grid-template-columns:28px 1fr;
+    grid-template-columns:28px 1fr 34px;
   }
   .set-row.done .set-num{color:var(--success);}
   .done-summary{
@@ -545,6 +545,19 @@
     color:var(--success);
     font-size:14px;
   }
+  .edit-set-btn{
+    background:var(--surface);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-sm);
+    border-radius:8px;
+    color:var(--text-muted);
+    width:34px; height:34px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition:all 0.15s;
+  }
+  .edit-set-btn:hover{color:var(--accent); border-color:var(--accent);}
+  .edit-set-btn:active{transform:scale(0.93);}
   .finish-section{
     margin-top:24px;
     background:var(--bg);
@@ -2325,6 +2338,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzoAopZn1rHAJcAfGgYxY64
 // GymCoach palette exactly and scale crisply at any size.
 const ICONS = {
   check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>`,
+  pencil: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>`,
   trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></svg>`,
   close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>`,
   trophy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H4a3 3 0 0 0 3 5"/><path d="M17 5h3a3 3 0 0 1-3 5"/><path d="M12 13v3"/><path d="M9 20h6"/><path d="M10 16.5h4l.5 3.5h-5z"/></svg>`,
@@ -2419,81 +2433,80 @@ function highlightMuscles(exerciseName){
 }
 
 // Simple, exercise-specific breathing + bracing cue and safety warning —
-// matches the person's own iPhone Notes template exactly, one line each,
-// no extra steps added. Compound/brace lifts vs isolation/no-brace lifts
-// follow the same split established in that template.
+// one line each, no extra steps added. Compound/brace lifts vs
+// isolation/no-brace lifts follow the established split.
 const EXERCISE_CUES = {
   "Smith flat bench press": {
-    breath: "INASEM af \u2192 BRACE maag \u2192 UITASEM druk",
-    warning: "Elmboe 45 grade \u2014 nooit wyd soos T-vorm nie"
+    breath: "INHALE down → BRACE core → EXHALE press",
+    warning: "Elbows at 45° — never wide like a T-shape"
   },
   "Lat pulldown": {
-    breath: "INASEM bo \u2192 BRACE maag \u2192 UITASEM trek af",
-    warning: "Dink elmboe as hake \u2014 trek elmboe af na heupe"
+    breath: "INHALE up → BRACE core → EXHALE pull down",
+    warning: "Think of elbows as hooks — pull elbows down to hips"
   },
   "Seated DB shoulder press": {
-    breath: "INASEM af \u2192 BRACE maag \u2192 UITASEM druk",
-    warning: "Kop bly stil \u2014 moenie nek intrek nie"
+    breath: "INHALE down → BRACE core → EXHALE press",
+    warning: "Keep head still — don't retract your neck"
   },
   "DB row": {
-    breath: "INASEM af \u2192 BRACE maag \u2192 UITASEM trek",
-    warning: "Moenie lyf draai om te help nie"
+    breath: "INHALE down → BRACE core → EXHALE pull",
+    warning: "Don't twist your torso to help the pull"
   },
   "Preacher curl": {
-    breath: "INASEM af \u2192 UITASEM krul \u2014 geen brace nodig",
-    warning: "Boarm plat teen kussing \u2014 lig dit nooit nie"
+    breath: "INHALE down → EXHALE curl — no brace needed",
+    warning: "Upper arm flat against the pad — never lift it"
   },
   "Tricep pushdown": {
-    breath: "INASEM bo \u2192 UITASEM druk \u2014 geen brace nodig",
-    warning: "Elmboe VAS langs liggaam \u2014 beweeg nooit"
+    breath: "INHALE up → EXHALE press — no brace needed",
+    warning: "Elbows LOCKED at your sides — never move"
   },
   "Hex bar deadlift": {
-    breath: "INASEM \u2192 BRACE maag HARD \u2192 UITASEM optrek",
-    warning: "Rug moet ALTYD plat bly \u2014 nooit rond nie"
+    breath: "INHALE → BRACE core HARD → EXHALE pull up",
+    warning: "Back must ALWAYS stay flat — never rounded"
   },
   "Smith squat": {
-    breath: "INASEM af \u2192 BRACE maag HARD \u2192 UITASEM opstaan",
-    warning: "Knie\u00eb NOOIT na binne \u2014 druk hulle buite uit"
+    breath: "INHALE down → BRACE core HARD → EXHALE stand up",
+    warning: "Knees NEVER cave in — push them out"
   },
   "Leg extension": {
-    breath: "INASEM af \u2192 UITASEM strek \u2014 geen brace nodig",
-    warning: "Knyp kwadriseps 1 sekonde bo"
+    breath: "INHALE down → EXHALE extend — no brace needed",
+    warning: "Squeeze quads for 1 second at the top"
   },
   "Leg curl": {
-    breath: "INASEM af \u2192 UITASEM krul \u2014 geen brace nodig",
-    warning: "Heupe PLAT teen bank \u2014 lig hulle nooit nie"
+    breath: "INHALE down → EXHALE curl — no brace needed",
+    warning: "Hips FLAT against the bench — never lift them"
   },
   "Calf raise": {
-    breath: "INASEM af \u2192 UITASEM opstaan \u2014 geen brace nodig",
-    warning: "Stadig af \u2014 die negatief is waar kuite groei"
+    breath: "INHALE down → EXHALE rise — no brace needed",
+    warning: "Slow on the way down — that's where calves grow"
   },
   "Smith incline press": {
-    breath: "INASEM af \u2192 BRACE maag \u2192 UITASEM druk",
-    warning: "Elmboe 45 grade \u2014 nooit wyd soos T-vorm nie"
+    breath: "INHALE down → BRACE core → EXHALE press",
+    warning: "Elbows at 45° — never wide like a T-shape"
   },
   "Low cable seated row": {
-    breath: "INASEM vorentoe \u2192 BRACE maag \u2192 UITASEM trek",
-    warning: "Sit regop \u2014 moenie agtertoe leun nie"
+    breath: "INHALE forward → BRACE core → EXHALE pull",
+    warning: "Sit upright — don't lean back"
   },
   "Dips": {
-    breath: "INASEM af \u2192 BRACE maag \u2192 UITASEM druk",
-    warning: "Stop by 90 grade \u2014 dieper = skouerbessering"
+    breath: "INHALE down → BRACE core → EXHALE press",
+    warning: "Stop at 90° — deeper risks shoulder injury"
   },
   "Face pulls": {
-    breath: "INASEM vorentoe \u2192 UITASEM trek \u2014 geen brace nodig",
-    warning: "Elmboe wyd en hoog \u2014 knyp agterste skouers"
+    breath: "INHALE forward → EXHALE pull — no brace needed",
+    warning: "Elbows wide and high — squeeze rear shoulders"
   },
   "Cable lateral raise": {
-    breath: "INASEM af \u2192 UITASEM lig \u2014 geen brace nodig",
-    warning: "Pinky kant effens ho\u00ebr as duim bo"
+    breath: "INHALE down → EXHALE raise — no brace needed",
+    warning: "Pinky side slightly higher than thumb at the top"
   },
   "DB hammer curl": {
-    breath: "INASEM af \u2192 UITASEM krul \u2014 geen brace nodig",
-    warning: "Elmboe VAS langs liggaam \u2014 beweeg nooit"
+    breath: "INHALE down → EXHALE curl — no brace needed",
+    warning: "Elbows LOCKED at your sides — never move"
   },
   "Hex bar Romanian deadlift": {
-    breath: "INASEM \u2192 BRACE maag HARD \u2192 UITASEM heupe vorentoe",
-    warning: "Rug rond = jy gaan te diep \u2014 stop ho\u00ebr"
+    breath: "INHALE → BRACE core HARD → EXHALE hips forward",
+    warning: "Rounded back means you're going too deep — stop higher"
   }
 };
 
@@ -2740,7 +2753,8 @@ async function renderExercises(exercises){
           row.classList.add('done');
           row.dataset.weight = s.weight;
           row.dataset.reps = s.reps;
-          row.innerHTML = `<div class="set-num">${s.set}</div><div class="done-summary">${s.weight}kg × ${s.reps} — logged</div>`;
+          row.dataset.date = lastSession.date;
+          renderDoneSetRow(row, ex, s.set, s.weight, s.reps);
         });
         const badgeLabel = isRealToday ? '✓ Logged today' : '✓ Completed this week';
         lastTimeRow.innerHTML = `<span class="last-time-text done-today-badge">${badgeLabel}</span>`;
@@ -2901,7 +2915,8 @@ async function logSet(ex, setNum, row){
   row.classList.add('done');
   row.dataset.weight = w;
   row.dataset.reps = r;
-  row.innerHTML = `<div class="set-num">${setNum}</div><div class="done-summary">${w}kg × ${r} — logged</div>`;
+  row.dataset.date = todayDate();
+  renderDoneSetRow(row, ex, setNum, w, r);
   highlightNewRow(row);
 
   const repsNum = Number(r);
@@ -2919,6 +2934,65 @@ async function logSet(ex, setNum, row){
 
   const restSeconds = BIG_LIFTS.includes(ex.exercise) ? REST_BIG : REST_SMALL;
   startRestTimer(restSeconds, ex, setNum);
+}
+
+// Renders a logged set's read-only "done" state with an edit button —
+// shared by fresh logging and by restoring an already-completed session.
+function renderDoneSetRow(row, ex, setNum, weight, reps){
+  row.innerHTML = `<div class="set-num">${setNum}</div><div class="done-summary">${weight}kg × ${reps} — logged</div><button class="edit-set-btn" title="Edit this set">${iconSpan('pencil', 14)}</button>`;
+  row.querySelector('.edit-set-btn').addEventListener('click', () => enterEditMode(row, ex, setNum));
+}
+
+// Swaps a done row back into editable inputs, pre-filled with its current
+// logged values, so a mistake can be fixed without re-logging from scratch.
+function enterEditMode(row, ex, setNum){
+  const w = row.dataset.weight;
+  const r = row.dataset.reps;
+  row.innerHTML = `
+    <div class="set-num">${setNum}</div>
+    <input type="text" placeholder="kg" class="w-input" inputmode="decimal" value="${w}">
+    <input type="text" placeholder="reps" class="r-input" inputmode="numeric" value="${r}">
+    <button class="log-btn edit-save-btn">${iconSpan('check', 20)}</button>
+  `;
+  row.classList.remove('done');
+  row.querySelector('.edit-save-btn').addEventListener('click', () => updateSet(ex, setNum, row));
+}
+
+async function updateSet(ex, setNum, row){
+  const w = row.querySelector('.w-input').value;
+  const r = row.querySelector('.r-input').value;
+  if(!w || !r){ flashToast("Enter weight and reps first", "error"); return; }
+
+  const btn = row.querySelector('.edit-save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span>';
+
+  try{
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        type: 'updateset',
+        date: row.dataset.date,
+        exercise: ex.exercise,
+        set: setNum,
+        weight: w,
+        reps: r
+      })
+    });
+  } catch(err){
+    flashToast("Couldn't update that set — check your connection", "error");
+    btn.disabled = false;
+    btn.innerHTML = iconSpan('check', 20);
+    return;
+  }
+
+  row.classList.add('done');
+  row.dataset.weight = w;
+  row.dataset.reps = r;
+  renderDoneSetRow(row, ex, setNum, w, r);
+  highlightNewRow(row);
+  flashToast("Set updated");
 }
 
 // If every set on this exercise is done and hit the top of the rep range,
