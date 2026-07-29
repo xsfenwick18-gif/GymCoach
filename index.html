@@ -1052,7 +1052,30 @@
   .exercise-name-btn:hover{text-decoration-color:var(--accent);}
 
   /* Warm-up checklist */
-  .warmup-sheet{max-height:92vh;}
+  .warmup-sheet{max-height:92vh; position:relative;}
+  .warmup-skip-btn{
+    position:absolute;
+    top:16px; right:16px;
+    width:32px; height:32px;
+    border-radius:50%;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text-muted);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    z-index:5;
+    transition:all 0.15s;
+  }
+  .warmup-skip-btn svg{width:14px; height:14px;}
+  .warmup-skip-btn:hover{color:var(--accent); border-color:var(--accent);}
+  .warmup-skip-btn:active{transform:scale(0.9);}
+  .warmup-skip-hint{
+    text-align:center;
+    font-family:'Inter',sans-serif;
+    font-size:11.5px;
+    color:var(--text-muted);
+    margin-top:12px;
+  }
   .warmup-header{
     text-align:center;
     padding:28px 24px 18px;
@@ -2085,52 +2108,6 @@
     </div>
 
     <div class="metrics-card">
-      <h3>My Meals</h3>
-      <div class="micro-section-title" style="margin-bottom:12px">Saved at a reference weight — tap Log, then tell it how many grams you're actually eating. It scales the macros for you.</div>
-      <div id="myMealsList"></div>
-      <div class="toggle-link" id="showAddMeal">+ Save a new meal</div>
-      <div class="log-food-form" id="addMealForm">
-        <div class="row"><input type="text" id="newMealName" placeholder="Meal name" style="width:100%"></div>
-        <div class="row">
-          <input type="text" id="newMealGrams" inputmode="decimal" placeholder="reference grams">
-          <input type="text" id="newMealCals" inputmode="decimal" placeholder="kcal">
-          <input type="text" id="newMealProtein" inputmode="decimal" placeholder="protein g">
-        </div>
-        <div class="row">
-          <input type="text" id="newMealCarbs" inputmode="decimal" placeholder="carbs g">
-          <input type="text" id="newMealFat" inputmode="decimal" placeholder="fat g">
-        </div>
-        <div class="row">
-          <input type="text" id="newMealFiber" inputmode="decimal" placeholder="fiber g (optional)">
-          <input type="text" id="newMealSodium" inputmode="decimal" placeholder="sodium mg (optional)">
-        </div>
-        <button id="saveMealBtn">Save Meal</button>
-      </div>
-    </div>
-
-    <div class="metrics-card">
-      <h3>Quick Log</h3>
-      <div class="micro-section-title" style="margin-bottom:12px">For a one-off item you weighed but don't want to save as a regular.</div>
-      <div class="log-food-form active" style="margin-top:0">
-        <div class="row"><input type="text" id="qlName" placeholder="Food name" style="width:100%"></div>
-        <div class="row">
-          <input type="text" id="qlGrams" inputmode="decimal" placeholder="grams eaten">
-          <input type="text" id="qlCals" inputmode="decimal" placeholder="kcal">
-          <input type="text" id="qlProtein" inputmode="decimal" placeholder="protein g">
-        </div>
-        <div class="row">
-          <input type="text" id="qlCarbs" inputmode="decimal" placeholder="carbs g">
-          <input type="text" id="qlFat" inputmode="decimal" placeholder="fat g">
-        </div>
-        <div class="row">
-          <input type="text" id="qlFiber" inputmode="decimal" placeholder="fiber g (optional)">
-          <input type="text" id="qlSodium" inputmode="decimal" placeholder="sodium mg (optional)">
-        </div>
-        <button id="qlLogBtn">Log Now</button>
-      </div>
-    </div>
-
-    <div class="metrics-card">
       <div class="score-header">
         <div>
           <h3 style="margin-bottom:2px">Today's Nutrition</h3>
@@ -2413,6 +2390,9 @@
 
 <div class="detail-overlay" id="warmupOverlay">
   <div class="detail-sheet warmup-sheet">
+    <button class="warmup-skip-btn" id="warmupSkipBtn" title="Already warmed up — skip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+    </button>
     <div class="warmup-header">
       <div class="warmup-icon">🔥</div>
       <div class="detail-title">Wake Your Body Up First</div>
@@ -2427,6 +2407,7 @@
         <label class="warmup-item"><input type="checkbox" class="warmup-check"><span class="warmup-check-box"></span><span class="warmup-text">Ready for warm-up sets on your first exercise</span></label>
       </div>
       <button class="warmup-start-btn" id="warmupStartBtn" disabled>Tick all 5 to start session</button>
+      <div class="warmup-skip-hint">Already did this before refreshing? Tap the ✕ above to skip straight back in.</div>
     </div>
   </div>
 </div>
@@ -3494,6 +3475,13 @@ warmupStartBtn.addEventListener('click', () => {
   document.getElementById('warmupOverlay').classList.remove('active');
 });
 
+// Skip button — for when the warm-up was already done before a refresh
+// brought this screen back up. Just dismisses it, no ticking required.
+document.getElementById('warmupSkipBtn').addEventListener('click', () => {
+  warmupDoneToday = true;
+  document.getElementById('warmupOverlay').classList.remove('active');
+});
+
 maybeShowWarmupGate();
 
 // ==== Tab switching ====
@@ -3556,7 +3544,6 @@ tabDiet.addEventListener('click', () => {
 
 function loadDietView(){
   loadTodaySummary();
-  loadMyMeals();
 }
 
 // Scores 0-100 per nutrient: full marks inside the target range, tapering
@@ -3679,181 +3666,6 @@ async function loadTodaySummary(){
     if(i === entries.length - 1) highlightNewRow(row);
   });
 }
-
-// ==== Food search (Open Food Facts — free, no key) ====
-// ==== My Meals ====
-async function loadMyMeals(){
-  const list = document.getElementById('myMealsList');
-  let meals;
-  try{
-    const res = await fetch(`${API_URL}?action=custommeals`);
-    meals = await res.json();
-  } catch(err){
-    list.innerHTML = '<div class="empty-chart">Couldn\'t load meals — check your connection</div>';
-    return;
-  }
-  list.innerHTML = '';
-
-  if(meals.length === 0){
-    list.innerHTML = `<div class="empty-illustration">
-      <span class="icon-inline" style="width:38px;height:38px;color:var(--border)">${ICONS.emptyBox}</span>
-      <div class="empty-chart" style="padding-top:8px">No saved meals yet — add your regulars below</div>
-    </div>`;
-    return;
-  }
-
-  meals.forEach(m => {
-    const row = document.createElement('div');
-    row.className = 'meal-row';
-    row.style.flexDirection = 'column';
-    row.style.alignItems = 'stretch';
-    row.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; width:100%">
-        <div>
-          <div class="fname">${m.name}</div>
-          <div class="fmacro">${m.calories}kcal · ${m.protein}g protein per ${m.gramsBase}g</div>
-        </div>
-        <div class="meal-row-actions">
-          <button class="log-toggle-btn">Log</button>
-          <button class="delete-x">${iconSpan('trash', 13)}</button>
-        </div>
-      </div>
-    `;
-
-    const logBtn = row.querySelector('.log-toggle-btn');
-    const delBtn = row.querySelector('.delete-x');
-
-    delBtn.addEventListener('click', async () => {
-      const proceed = await showConfirm("Delete meal?", `Remove "${m.name}" from My Meals? This won't affect anything already logged.`);
-      if(!proceed) return;
-      await fetch(API_URL, {
-        method:'POST', headers:{'Content-Type':'text/plain'},
-        body: JSON.stringify({ type:'deletemeal', id: m.id })
-      });
-      flashToast("Meal deleted");
-      loadMyMeals();
-    });
-
-    logBtn.addEventListener('click', () => {
-      const existing = row.querySelector('.grams-prompt');
-      if(existing){ existing.remove(); return; }
-
-      const prompt = document.createElement('div');
-      prompt.className = 'grams-prompt';
-      prompt.innerHTML = `
-        <input type="text" inputmode="decimal" value="${m.gramsBase}" placeholder="grams eaten today">
-        <button>Confirm</button>
-      `;
-      const input = prompt.querySelector('input');
-      const confirmBtn = prompt.querySelector('button');
-      confirmBtn.addEventListener('click', async () => {
-        const gramsEaten = Number(input.value);
-        if(!gramsEaten || gramsEaten <= 0){ flashToast("Enter grams eaten", "error"); return; }
-
-        const ratio = gramsEaten / Number(m.gramsBase);
-        const scaled = {
-          calories: Math.round(m.calories * ratio),
-          protein: Math.round(m.protein * ratio),
-          carbs: Math.round(m.carbs * ratio),
-          fat: Math.round(m.fat * ratio),
-          fiber: Math.round((m.fiber||0) * ratio),
-          sodium: Math.round((m.sodium||0) * ratio)
-        };
-
-        await withButtonFeedback(confirmBtn, async () => {
-          await fetch(API_URL, {
-            method:'POST', headers:{'Content-Type':'text/plain'},
-            body: JSON.stringify({
-              type:'food', date: todayDate(), meal:'',
-              foodName: m.name, grams: gramsEaten,
-              calories: scaled.calories, protein: scaled.protein,
-              carbs: scaled.carbs, fat: scaled.fat,
-              fiber: scaled.fiber, sodium: scaled.sodium,
-              source: 'My Meals'
-            })
-          });
-        }, { loadingText:'', successText:'Done' });
-
-        flashToast(`${m.name} logged — ${gramsEaten}g, ${scaled.calories}kcal`);
-        prompt.remove();
-        loadTodaySummary();
-      });
-      row.appendChild(prompt);
-      input.focus();
-      input.select();
-    });
-
-    list.appendChild(row);
-  });
-}
-
-
-document.getElementById('showAddMeal').addEventListener('click', () => {
-  document.getElementById('addMealForm').classList.toggle('active');
-});
-
-document.getElementById('saveMealBtn').addEventListener('click', async (e) => {
-  const name = document.getElementById('newMealName').value.trim();
-  const gramsBase = document.getElementById('newMealGrams').value;
-  const calories = document.getElementById('newMealCals').value;
-  const protein = document.getElementById('newMealProtein').value;
-  const carbs = document.getElementById('newMealCarbs').value;
-  const fat = document.getElementById('newMealFat').value;
-  const fiber = document.getElementById('newMealFiber').value;
-  const sodium = document.getElementById('newMealSodium').value;
-
-  if(!name || !gramsBase || !calories){
-    flashToast("Name, grams, and calories are required", "error");
-    return;
-  }
-
-  const ok = await withButtonFeedback(e.currentTarget, async () => {
-    await fetch(API_URL, {
-      method:'POST', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({ type:'custommeal', name, gramsBase, calories, protein, carbs, fat, fiber, sodium })
-    });
-  }, { loadingText: 'Saving...', successText: 'Saved' });
-
-  if(!ok) return;
-  flashToast("Meal saved");
-  ['newMealName','newMealGrams','newMealCals','newMealProtein','newMealCarbs','newMealFat','newMealFiber','newMealSodium']
-    .forEach(id => document.getElementById(id).value = '');
-  document.getElementById('addMealForm').classList.remove('active');
-  loadMyMeals();
-});
-
-document.getElementById('qlLogBtn').addEventListener('click', async (e) => {
-  const name = document.getElementById('qlName').value.trim();
-  const grams = document.getElementById('qlGrams').value;
-  const calories = document.getElementById('qlCals').value;
-  const protein = document.getElementById('qlProtein').value;
-  const carbs = document.getElementById('qlCarbs').value;
-  const fat = document.getElementById('qlFat').value;
-  const fiber = document.getElementById('qlFiber').value;
-  const sodium = document.getElementById('qlSodium').value;
-
-  if(!name || !grams || !calories){
-    flashToast("Name, grams, and calories are required", "error");
-    return;
-  }
-
-  const ok = await withButtonFeedback(e.currentTarget, async () => {
-    await fetch(API_URL, {
-      method:'POST', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({
-        type:'food', date: todayDate(), meal:'',
-        foodName: name, grams, calories, protein, carbs, fat, fiber, sodium,
-        source: 'Quick Log'
-      })
-    });
-  }, { loadingText: 'Logging...', successText: 'Logged' });
-
-  if(!ok) return;
-  flashToast(`${name} logged`);
-  ['qlName','qlGrams','qlCals','qlProtein','qlCarbs','qlFat','qlFiber','qlSodium']
-    .forEach(id => document.getElementById(id).value = '');
-  loadTodaySummary();
-});
 
 function loadProgressView(){
   const select = document.getElementById('exerciseChartSelect');
