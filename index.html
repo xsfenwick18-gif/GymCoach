@@ -1138,6 +1138,92 @@
     cursor:pointer;
   }
 
+  /* Eating plan entry card */
+  .eating-plan-entry{cursor:pointer; transition:transform 0.1s;}
+  .eating-plan-entry:active{transform:scale(0.99);}
+  .plan-entry-row{display:flex; justify-content:space-between; align-items:center;}
+  .plan-entry-sub{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-muted);}
+  .plan-entry-arrow{font-size:26px; color:var(--accent); font-weight:700;}
+
+  /* Eating plan overlay content */
+  .plan-sheet{max-width:520px;}
+  .plan-target-bar{display:flex; gap:10px; margin-bottom:20px;}
+  .plan-target-card{
+    flex:1; background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:12px 8px; text-align:center;
+  }
+  .plan-target-value{font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--text);}
+  .plan-target-label{font-size:9.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-top:3px; font-weight:600;}
+
+  .plan-meal-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:16px; margin-bottom:12px; box-shadow:var(--shadow-sm);
+  }
+  .plan-meal-card.plan-variable{border-style:dashed; border-color:var(--accent);}
+  .plan-meal-time-row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;}
+  .plan-meal-time{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--accent); font-weight:700;
+    background:var(--surface-raised); padding:3px 9px; border-radius:6px;
+  }
+  .plan-meal-macros{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--text-muted); font-weight:500;}
+  .plan-meal-name{
+    font-family:'Oswald',sans-serif; font-size:15.5px; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.3px; margin:8px 0 10px; color:var(--text);
+  }
+  .plan-ingredient-list{list-style:none;}
+  .plan-ing-row{display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-top:1px solid var(--border); font-size:13px;}
+  .plan-ing-row:first-child{border-top:none;}
+  .plan-ing-name{display:flex; align-items:center; color:var(--text); cursor:pointer; flex:1;}
+  .plan-ing-name.plain{cursor:default;}
+  .plan-ing-amount{font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--accent-dim); white-space:nowrap; margin-left:12px;}
+  .plan-check{position:absolute; opacity:0; width:0; height:0;}
+  .plan-checkbox{
+    width:17px; height:17px; border:2px solid var(--border); border-radius:5px;
+    margin-right:10px; flex-shrink:0; position:relative; transition:all 0.15s;
+  }
+  .plan-check:checked ~ .plan-checkbox{background:var(--success); border-color:var(--success);}
+  .plan-check:checked ~ .plan-checkbox::after{
+    content:""; position:absolute; left:5px; top:1px; width:4px; height:8px;
+    border-right:2px solid white; border-bottom:2px solid white; transform:rotate(45deg);
+  }
+  .plan-check:checked ~ span + span, label:has(.plan-check:checked) .plan-ing-amount{opacity:0.5; text-decoration:line-through;}
+
+  .plan-prep-note{
+    background:rgba(37,99,235,0.07); border-left:3px solid var(--accent); border-radius:0 8px 8px 0;
+    padding:10px 14px; font-size:12.5px; color:var(--accent-dim); margin-top:12px;
+  }
+  .plan-prep-note strong{font-weight:700;}
+
+  .plan-summary-card{
+    background:var(--text); border-radius:16px; padding:20px 18px; margin:20px 0 24px; color:var(--bg);
+  }
+  html[data-theme="dark"] .plan-summary-card{background:var(--surface); border:1px solid var(--border);}
+  .plan-summary-title{font-family:'Oswald',sans-serif; text-transform:uppercase; font-size:13px; letter-spacing:1px; color:var(--text-muted); margin-bottom:12px;}
+  .plan-summary-row{display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-top:1px solid rgba(128,128,128,0.2); font-size:13px;}
+  .plan-summary-row:first-of-type{border-top:none;}
+  .plan-summary-row.plan-highlight{margin-top:6px; padding-top:12px; border-top:2px solid var(--success);}
+  .plan-summary-value{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px;}
+  .plan-summary-value.plan-good{color:var(--success);}
+
+  .plan-ritual-section{margin-top:8px;}
+  .plan-ritual-header{font-family:'Oswald',sans-serif; text-transform:uppercase; font-size:14px; letter-spacing:1px; margin-bottom:4px; color:var(--text);}
+  .plan-prep-block{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px;}
+  .plan-prep-block.plan-final{background:var(--text); border:none;}
+  html[data-theme="dark"] .plan-prep-block.plan-final{background:var(--surface-raised);}
+  .plan-prep-block.plan-final .plan-prep-block-title{color:var(--bg);}
+  html[data-theme="dark"] .plan-prep-block.plan-final .plan-prep-block-title{color:var(--text);}
+  .plan-prep-block.plan-final .plan-ing-name.plain{color:var(--bg); opacity:0.85;}
+  html[data-theme="dark"] .plan-prep-block.plan-final .plan-ing-name.plain{color:var(--text); opacity:0.85;}
+  .plan-prep-block-title{font-family:'Oswald',sans-serif; text-transform:uppercase; font-size:12px; letter-spacing:0.5px; color:var(--accent); margin-bottom:8px; font-weight:600;}
+  .plan-prep-block .plan-ing-row{font-size:12.5px; padding:6px 0;}
+  .plan-prep-block .plan-prep-note{margin-top:8px; font-size:12px;}
+
+  .plan-footer-note{
+    margin-top:24px; padding-top:18px; border-top:2px solid var(--border);
+    text-align:center; font-size:11.5px; color:var(--text-muted); line-height:1.6;
+  }
+  .plan-footer-signature{font-family:'Oswald',sans-serif; text-transform:uppercase; color:var(--text); font-size:12px; letter-spacing:0.5px; margin-bottom:6px;}
+
   /* Coach chat */
   .coach-fab{
     position:fixed;
@@ -1988,6 +2074,16 @@
   </div>
 
   <div id="dietView" style="display:none">
+    <div class="metrics-card eating-plan-entry" id="eatingPlanEntryBtn">
+      <div class="plan-entry-row">
+        <div>
+          <h3 style="margin-bottom:4px">My Eating Plan</h3>
+          <div class="plan-entry-sub">Aggressive lean bulk · 3,169 kcal · 221g protein</div>
+        </div>
+        <div class="plan-entry-arrow">›</div>
+      </div>
+    </div>
+
     <div class="metrics-card">
       <h3>My Meals</h3>
       <div class="micro-section-title" style="margin-bottom:12px">Saved at a reference weight — tap Log, then tell it how many grams you're actually eating. It scales the macros for you.</div>
@@ -2137,6 +2233,180 @@
     <div class="confirm-btn-row">
       <button class="confirm-btn cancel" id="confirmCancelBtn">Change it</button>
       <button class="confirm-btn proceed" id="confirmProceedBtn">Log it anyway</button>
+    </div>
+  </div>
+</div>
+
+<div class="detail-overlay" id="eatingPlanOverlay">
+  <div class="detail-sheet plan-sheet">
+    <div class="detail-header">
+      <div>
+        <div class="detail-title">Daily Eating Plan</div>
+        <div class="warmup-sub" style="margin:4px 0 0; text-align:left; max-width:none">Aggressive Lean Bulk</div>
+      </div>
+      <button class="detail-close" id="eatingPlanCloseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+
+    <div class="detail-body">
+      <div class="plan-target-bar">
+        <div class="plan-target-card"><div class="plan-target-value">3,169</div><div class="plan-target-label">Kcal Target</div></div>
+        <div class="plan-target-card"><div class="plan-target-value">221g</div><div class="plan-target-label">Protein Target</div></div>
+        <div class="plan-target-card"><div class="plan-target-value">+469</div><div class="plan-target-label">Surplus</div></div>
+      </div>
+
+      <div class="plan-meal-card">
+        <div class="plan-meal-time-row"><span class="plan-meal-time">05:00</span><span class="plan-meal-macros">452 kcal · 41.6g protein</span></div>
+        <div class="plan-meal-name">Pre-Workout Shake</div>
+        <ul class="plan-ingredient-list">
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Full cream milk</label><span class="plan-ing-amount">500ml</span></li>
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>USN Bluelab Whey</label><span class="plan-ing-amount">1 scoop (32g)</span></li>
+        </ul>
+        <div class="plan-prep-note"><strong>Drink during your 5–6am session.</strong> Not before — sip it between sets.</div>
+      </div>
+
+      <div class="plan-meal-card">
+        <div class="plan-meal-time-row"><span class="plan-meal-time">06:00</span><span class="plan-meal-macros">488 kcal · 26.8g protein</span></div>
+        <div class="plan-meal-name">Breakfast</div>
+        <ul class="plan-ingredient-list">
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>XL eggs, scrambled</label><span class="plan-ing-amount">3 eggs</span></li>
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Brown bread</label><span class="plan-ing-amount">2 slices</span></li>
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Stork butter</label><span class="plan-ing-amount">20g</span></li>
+        </ul>
+      </div>
+
+      <div class="plan-meal-card">
+        <div class="plan-meal-time-row"><span class="plan-meal-time">08:00</span><span class="plan-meal-macros">362 kcal · 28.2g protein</span></div>
+        <div class="plan-meal-name">Second Meal</div>
+        <ul class="plan-ingredient-list">
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Tuna, drained</label><span class="plan-ing-amount">1 can (119g)</span></li>
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>NOLA mayonnaise</label><span class="plan-ing-amount">1 tbsp (15g)</span></li>
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Brown bread</label><span class="plan-ing-amount">2 slices</span></li>
+        </ul>
+      </div>
+
+      <div class="plan-meal-card">
+        <div class="plan-meal-time-row"><span class="plan-meal-time">11:00</span><span class="plan-meal-macros">656 kcal · 44.3g protein</span></div>
+        <div class="plan-meal-name">Third Meal</div>
+        <ul class="plan-ingredient-list">
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Wholewheat spaghetti, dry</label><span class="plan-ing-amount">100g</span></li>
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Lean beef mince</label><span class="plan-ing-amount">100g raw</span></li>
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Mature cheddar</label><span class="plan-ing-amount">30g</span></li>
+        </ul>
+      </div>
+
+      <div class="plan-meal-card">
+        <div class="plan-meal-time-row"><span class="plan-meal-time">14:00</span><span class="plan-meal-macros">525 kcal · 38g protein</span></div>
+        <div class="plan-meal-name">Fourth Meal</div>
+        <ul class="plan-ingredient-list">
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Chicken breast, raw weight</label><span class="plan-ing-amount">100g</span></li>
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Basmati rice, dry</label><span class="plan-ing-amount">100g</span></li>
+        </ul>
+      </div>
+
+      <div class="plan-meal-card">
+        <div class="plan-meal-time-row"><span class="plan-meal-time">16:00</span><span class="plan-meal-macros">166 kcal · 9.0g protein</span></div>
+        <div class="plan-meal-name">Fifth Meal — Milk Snack</div>
+        <ul class="plan-ingredient-list">
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Full cream milk</label><span class="plan-ing-amount">250ml</span></li>
+        </ul>
+      </div>
+
+      <div class="plan-meal-card plan-variable">
+        <div class="plan-meal-time-row"><span class="plan-meal-time">19:00</span><span class="plan-meal-macros">~450 kcal · ~30g protein</span></div>
+        <div class="plan-meal-name">Dinner — Family Meal</div>
+        <ul class="plan-ingredient-list">
+          <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Normal family portion</label><span class="plan-ing-amount">as served</span></li>
+        </ul>
+        <div class="plan-prep-note"><strong>This one varies day to day.</strong> Whatever the family cooks — meat, rice, veg. It's the only estimate in the plan; everything else is weighed and exact.</div>
+      </div>
+
+      <div class="plan-summary-card">
+        <div class="plan-summary-title">Daily Total</div>
+        <div class="plan-summary-row"><span>Maintenance</span><span class="plan-summary-value">2,700 kcal</span></div>
+        <div class="plan-summary-row"><span>Coffee + tea (auto-added)</span><span class="plan-summary-value">70 kcal</span></div>
+        <div class="plan-summary-row plan-highlight"><span>Your total</span><span class="plan-summary-value plan-good">3,169 kcal</span></div>
+        <div class="plan-summary-row"><span>Surplus achieved</span><span class="plan-summary-value plan-good">+469 kcal</span></div>
+        <div class="plan-summary-row"><span>Total protein</span><span class="plan-summary-value plan-good">221g</span></div>
+      </div>
+
+      <div class="plan-ritual-section">
+        <div class="plan-ritual-header">Every Evening — Meal Prep For Tomorrow</div>
+        <div class="warmup-sub" style="text-align:left; max-width:none; margin-bottom:14px">About 15 minutes, once a day, after dinner. Do these in order — everything after this is just grab-and-go.</div>
+
+        <div class="plan-prep-block">
+          <div class="plan-prep-block-title">1 · Mix the pre-workout shake</div>
+          <ul class="plan-ingredient-list">
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Full cream milk into shaker</label><span class="plan-ing-amount">500ml</span></li>
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>USN Bluelab Whey</label><span class="plan-ing-amount">1 scoop (32g)</span></li>
+          </ul>
+          <div class="plan-prep-note">Shake it, lid on, straight into the fridge. Grab it on your way to train at 5am — zero thinking required.</div>
+        </div>
+
+        <div class="plan-prep-block">
+          <div class="plan-prep-block-title">2 · Cook and portion the mince</div>
+          <ul class="plan-ingredient-list">
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Lean beef mince, browned</label><span class="plan-ing-amount">100g raw</span></li>
+          </ul>
+          <div class="plan-prep-note">Fry it dry (no oil needed, it has enough fat). Let it cool, into a container, fridge. This goes with tomorrow's 11:00 pasta meal.</div>
+        </div>
+
+        <div class="plan-prep-block">
+          <div class="plan-prep-block-title">3 · Cook and portion the chicken</div>
+          <ul class="plan-ingredient-list">
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Chicken breast, grilled or air-fried</label><span class="plan-ing-amount">100g raw</span></li>
+          </ul>
+          <div class="plan-prep-note">Plain salt and pepper is fine. Cool, container, fridge. This goes with tomorrow's 14:00 meal.</div>
+        </div>
+
+        <div class="plan-prep-block">
+          <div class="plan-prep-block-title">4 · Weigh the dry goods</div>
+          <ul class="plan-ingredient-list">
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Wholewheat spaghetti, dry</label><span class="plan-ing-amount">100g</span></li>
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Basmati rice, dry</label><span class="plan-ing-amount">100g</span></li>
+          </ul>
+          <div class="plan-prep-note">Into two separate containers or ziplock bags, labelled. Cook fresh tomorrow — pasta at 11:00, rice at 14:00. Only the raw weighing happens tonight.</div>
+        </div>
+
+        <div class="plan-prep-block">
+          <div class="plan-prep-block-title">5 · Portion the cheese</div>
+          <ul class="plan-ingredient-list">
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Mature cheddar</label><span class="plan-ing-amount">30g</span></li>
+          </ul>
+          <div class="plan-prep-note">Small container or cling wrap. Grated or sliced — whatever's faster in the morning.</div>
+        </div>
+
+        <div class="plan-prep-block">
+          <div class="plan-prep-block-title">6 · Set out what doesn't need prep</div>
+          <ul class="plan-ingredient-list">
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Tuna can</label><span class="plan-ing-amount">1 can (170g)</span></li>
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>NOLA mayonnaise</label><span class="plan-ing-amount">on counter</span></li>
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Brown bread</label><span class="plan-ing-amount">4 slices needed</span></li>
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Stork butter</label><span class="plan-ing-amount">on counter</span></li>
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Eggs</label><span class="plan-ing-amount">3 eggs</span></li>
+          </ul>
+          <div class="plan-prep-note">These don't need cooking tonight — just check they're not running low so there's no morning surprise.</div>
+        </div>
+
+        <div class="plan-prep-block plan-final">
+          <div class="plan-prep-block-title">Tomorrow morning, all you do is:</div>
+          <ul class="plan-ingredient-list plan-final-list">
+            <li class="plan-ing-row"><span class="plan-ing-name plain">Grab the shake, train</span></li>
+            <li class="plan-ing-row"><span class="plan-ing-name plain">Scramble 3 eggs, toast bread</span></li>
+            <li class="plan-ing-row"><span class="plan-ing-name plain">Make the tuna sandwich</span></li>
+            <li class="plan-ing-row"><span class="plan-ing-name plain">Reheat mince + cook pasta at 11:00</span></li>
+            <li class="plan-ing-row"><span class="plan-ing-name plain">Reheat chicken + cook rice at 14:00</span></li>
+            <li class="plan-ing-row"><span class="plan-ing-name plain">Pour a glass of milk at 16:00</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="plan-footer-note">
+        <div class="plan-footer-signature">Coach's Note</div>
+        Every gram above comes from a label you photographed yourself — not an estimate.<br>
+        Dinner is the only variable. Everything else is fixed. Follow it daily, no thinking required.
+      </div>
     </div>
   </div>
 </div>
@@ -3833,6 +4103,18 @@ document.getElementById('detailCloseBtn').addEventListener('click', () => {
 document.getElementById('exerciseDetailOverlay').addEventListener('click', (e) => {
   if(e.target.id === 'exerciseDetailOverlay'){
     document.getElementById('exerciseDetailOverlay').classList.remove('active');
+  }
+});
+
+document.getElementById('eatingPlanEntryBtn').addEventListener('click', () => {
+  document.getElementById('eatingPlanOverlay').classList.add('active');
+});
+document.getElementById('eatingPlanCloseBtn').addEventListener('click', () => {
+  document.getElementById('eatingPlanOverlay').classList.remove('active');
+});
+document.getElementById('eatingPlanOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'eatingPlanOverlay'){
+    document.getElementById('eatingPlanOverlay').classList.remove('active');
   }
 });
 
