@@ -2978,6 +2978,20 @@ async function fetchExerciseContext(exerciseName){
 async function renderExercises(exercises){
   const list = document.getElementById('exerciseList');
   list.innerHTML = '';
+
+  // ONE batched call for the whole day instead of 2 calls PER exercise.
+  // This used to be the single biggest cause of slow page loads — a
+  // 6-exercise day meant 12 separate round-trips to Apps Script, each
+  // with its own cold-start latency. Now it's 1 call total.
+  let dayHistory = {};
+  try{
+    const res = await fetch(`${API_URL}?action=dayhistory&day=${encodeURIComponent(currentDay)}`);
+    dayHistory = await res.json();
+    Object.assign(exerciseCache, dayHistory);
+  } catch(err){
+    // Falls through — cards below handle a missing cache entry gracefully.
+  }
+
   const cardStatuses = []; // tracks whether each exercise is already fully done today
 
   for(const ex of exercises){
@@ -3007,10 +3021,10 @@ async function renderExercises(exercises){
     }
     card.appendChild(breathRow);
 
-    // Last-time reference row — placeholder while loading, filled in once fetched
+    // Last-time reference row — filled in synchronously below, straight
+    // from the already-fetched batch (no per-card loading state anymore).
     const lastTimeRow = document.createElement('div');
     lastTimeRow.className = 'last-time-row';
-    lastTimeRow.innerHTML = `<span class="last-time-text">Loading last session…</span>`;
     card.appendChild(lastTimeRow);
 
     const setsWrap = document.createElement('div');
@@ -3037,40 +3051,34 @@ async function renderExercises(exercises){
 
     list.appendChild(card);
 
-    // Fetch this exercise's history in the background. If the most recent
-    // logged session matches THIS WEEK'S occurrence of the day currently
-    // being viewed (works whether that's literally today or you're
-    // previewing Tue–Thu later in the week), restore those sets as
-    // already-done instead of showing empty inputs. Next week, once that
-    // weekday rolls around again, the expected date is a new one, so it
-    // resets itself automatically — no extra cleanup logic needed.
+    // Everything below used to be inside an async .then() waiting on its
+    // own network call — now it runs immediately against the batch that
+    // already landed above, so cards render fully populated on first paint.
     const expectedDate = dateForDayThisWeek(currentDay);
     const isRealToday = currentDay === REAL_TODAY_DAY;
-    const statusPromise = fetchExerciseContext(ex.exercise).then(ctx => {
-      const { lastSession } = ctx;
-      const loggedThisOccurrence = lastSession && lastSession.date === expectedDate && lastSession.sets.length > 0;
+    const ctx = exerciseCache[ex.exercise] || { lastSession: null, allTimeMax: 0 };
+    const { lastSession } = ctx;
+    const loggedThisOccurrence = lastSession && lastSession.date === expectedDate && lastSession.sets.length > 0;
+    let isFullyDone = false;
 
-      if(loggedThisOccurrence){
-        const rows = card.querySelectorAll('.set-row');
-        lastSession.sets.forEach(s => {
-          const row = rows[s.set - 1];
-          if(!row) return;
-          row.classList.add('done');
-          row.dataset.weight = s.weight;
-          row.dataset.reps = s.reps;
-          row.dataset.date = lastSession.date;
-          renderDoneSetRow(row, ex, s.set, s.weight, s.reps);
-        });
-        const badgeLabel = isRealToday ? '✓ Logged today' : '✓ Completed this week';
-        lastTimeRow.innerHTML = `<span class="last-time-text done-today-badge">${badgeLabel}</span>`;
-        checkRangeHitTip(ex, card);
-        return lastSession.sets.length >= ex.targetSets;
-      }
-
-      if(!lastSession || !lastSession.sets || lastSession.sets.length === 0){
-        lastTimeRow.innerHTML = `<span class="last-time-text">First time logging this — no history yet.</span>`;
-        return false;
-      }
+    if(loggedThisOccurrence){
+      const rows = card.querySelectorAll('.set-row');
+      lastSession.sets.forEach(s => {
+        const row = rows[s.set - 1];
+        if(!row) return;
+        row.classList.add('done');
+        row.dataset.weight = s.weight;
+        row.dataset.reps = s.reps;
+        row.dataset.date = lastSession.date;
+        renderDoneSetRow(row, ex, s.set, s.weight, s.reps);
+      });
+      const badgeLabel = isRealToday ? '✓ Logged today' : '✓ Completed this week';
+      lastTimeRow.innerHTML = `<span class="last-time-text done-today-badge">${badgeLabel}</span>`;
+      checkRangeHitTip(ex, card);
+      isFullyDone = lastSession.sets.length >= ex.targetSets;
+    } else if(!lastSession || !lastSession.sets || lastSession.sets.length === 0){
+      lastTimeRow.innerHTML = `<span class="last-time-text">First time logging this — no history yet.</span>`;
+    } else {
       const chipsHtml = lastSession.sets.map(s =>
         `<button class="last-set-chip" data-set="${s.set}" data-weight="${s.weight}" data-reps="${s.reps}">
           <span class="chip-set-num">S${s.set}</span> ${s.weight}kg × ${s.reps}
@@ -3091,17 +3099,12 @@ async function renderExercises(exercises){
       lastTimeRow.querySelector('.copy-all-btn').addEventListener('click', () => {
         copyLastSession(card, lastSession.sets);
       });
-      return false;
-    }).catch(() => {
-      lastTimeRow.innerHTML = `<span class="last-time-text">Couldn't load history — logging still works.</span>`;
-      return false;
-    });
+    }
 
-    cardStatuses.push(statusPromise);
+    cardStatuses.push(isFullyDone);
   }
 
-  const results = await Promise.all(cardStatuses);
-  const allDoneToday = results.length > 0 && results.every(r => r === true);
+  const allDoneToday = cardStatuses.length > 0 && cardStatuses.every(r => r === true);
   showTodayCompletedBanner(allDoneToday, currentDay === REAL_TODAY_DAY);
 }
 
@@ -3177,6 +3180,7 @@ async function logSet(ex, setNum, row){
   if(!w || !r){ flashToast("Enter weight and reps first", "error"); return; }
 
   const weightNum = Number(w);
+  const repsNum = Number(r);
   const ctx = exerciseCache[ex.exercise];
   const lastTop = ctx && ctx.lastSession && ctx.lastSession.topWeight;
 
@@ -3193,39 +3197,19 @@ async function logSet(ex, setNum, row){
     }
   }
 
-  const btn = row.querySelector('.log-btn');
-  disableAllLogButtons(true);
-  btn.innerHTML = '<span class="btn-spinner"></span>';
-
-  try{
-    await fetch(API_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'text/plain'},
-      body: JSON.stringify({
-        date: todayDate(),
-        day: currentDay,
-        exercise: ex.exercise,
-        set: setNum,
-        weight: w,
-        reps: r
-      })
-    });
-  } catch(err){
-    disableAllLogButtons(false);
-    btn.innerHTML = iconSpan('check', 20);
-    flashToast("Couldn't log that set — check your connection", "error");
-    return;
-  }
-
+  // OPTIMISTIC UPDATE — the screen reacts instantly, before the network
+  // call even starts. The save to the Sheet happens in the background;
+  // Apps Script alone typically takes 0.5-2s per call, and waiting for
+  // that before showing anything is what made logging feel slow. If the
+  // background save fails, the row reverts and an error toast explains why.
   row.classList.add('done');
   row.dataset.weight = w;
   row.dataset.reps = r;
   row.dataset.date = todayDate();
+  const originalRowHTML = row.innerHTML;
   renderDoneSetRow(row, ex, setNum, w, r);
   highlightNewRow(row);
 
-  const repsNum = Number(r);
-  // PR detection — compare against this exercise's all-time best
   const isPR = ctx && weightNum > (ctx.allTimeMax || 0);
   if(isPR){
     if(ctx) ctx.allTimeMax = weightNum;
@@ -3239,6 +3223,26 @@ async function logSet(ex, setNum, row){
 
   const restSeconds = BIG_LIFTS.includes(ex.exercise) ? REST_BIG : REST_SMALL;
   startRestTimer(restSeconds, ex, setNum);
+
+  // Background save — UI has already moved on by the time this resolves.
+  fetch(API_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain'},
+    body: JSON.stringify({
+      date: todayDate(),
+      day: currentDay,
+      exercise: ex.exercise,
+      set: setNum,
+      weight: w,
+      reps: r
+    })
+  }).catch(err => {
+    row.classList.remove('done');
+    row.innerHTML = originalRowHTML;
+    const newBtn = row.querySelector('.log-btn');
+    if(newBtn) newBtn.addEventListener('click', () => logSet(ex, setNum, row));
+    flashToast("Couldn't save that set — check your connection and log it again", "error");
+  });
 }
 
 // Renders a logged set's read-only "done" state with an edit button —
@@ -4015,63 +4019,57 @@ async function syncPlanLoggedMeals(){
 }
 
 document.querySelectorAll('.plan-log-check').forEach(chk => {
-  chk.addEventListener('change', async () => {
+  chk.addEventListener('change', () => {
     const toggle = chk.closest('.plan-log-toggle');
     const label = toggle.querySelector('.plan-log-label');
 
     if(chk.checked){
-      chk.disabled = true;
-      label.textContent = 'Logging…';
-      try{
-        const res = await fetch(API_URL, {
-          method:'POST', headers:{'Content-Type':'text/plain'},
-          body: JSON.stringify({
-            type:'food',
-            date: todayDate(),
-            meal:'',
-            foodName: chk.dataset.meal,
-            grams: '',
-            calories: chk.dataset.cal,
-            protein: chk.dataset.protein,
-            carbs: chk.dataset.carbs,
-            fat: chk.dataset.fat,
-            fiber: chk.dataset.fiber,
-            sodium: chk.dataset.sodium,
-            source: 'Eating Plan'
-          })
-        });
-        const data = await res.json();
+      // OPTIMISTIC — instant UI + instant Today's Nutrition update. The
+      // actual Sheet write happens in the background; this is what makes
+      // tapping a meal feel instant instead of waiting on Apps Script.
+      label.textContent = '✓ Logged — tap to undo';
+      flashToast(`${chk.dataset.meal} added to today's totals`);
+      loadTodaySummary();
+
+      chk._pendingSave = fetch(API_URL, {
+        method:'POST', headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({
+          type:'food', date: todayDate(), meal:'', foodName: chk.dataset.meal, grams:'',
+          calories: chk.dataset.cal, protein: chk.dataset.protein, carbs: chk.dataset.carbs,
+          fat: chk.dataset.fat, fiber: chk.dataset.fiber, sodium: chk.dataset.sodium,
+          source: 'Eating Plan'
+        })
+      }).then(res => res.json()).then(data => {
         chk.dataset.logId = data.id || '';
-        label.textContent = '✓ Logged — tap to undo';
-        flashToast(`${chk.dataset.meal} added to today's totals`);
-        loadTodaySummary();
-      } catch(err){
+        chk._pendingSave = null;
+      }).catch(() => {
         chk.checked = false;
         label.textContent = 'Log this meal';
-        flashToast("Couldn't log that meal — check your connection", "error");
-      } finally {
-        chk.disabled = false;
-      }
+        chk._pendingSave = null;
+        flashToast("Couldn't save that meal — check your connection and try again", "error");
+        loadTodaySummary();
+      });
     } else {
-      // Unchecking an already-logged meal removes it from today's log.
-      chk.disabled = true;
-      label.textContent = 'Removing…';
-      try{
-        await fetch(API_URL, {
+      // Unchecking — instant UI, delete happens in the background. If a
+      // log for this meal is still mid-flight (rare, only if someone taps
+      // fast), wait for its real id to land before deleting it.
+      label.textContent = 'Log this meal';
+      flashToast(`${chk.dataset.meal} removed from today's totals`);
+      loadTodaySummary();
+
+      const doDelete = () => {
+        fetch(API_URL, {
           method:'POST', headers:{'Content-Type':'text/plain'},
           body: JSON.stringify({ type:'deletefood', id: chk.dataset.logId })
+        }).then(() => { delete chk.dataset.logId; })
+        .catch(() => {
+          chk.checked = true;
+          label.textContent = '✓ Logged — tap to undo';
+          flashToast("Couldn't remove that meal — check your connection", "error");
+          loadTodaySummary();
         });
-        delete chk.dataset.logId;
-        label.textContent = 'Log this meal';
-        flashToast(`${chk.dataset.meal} removed from today's totals`);
-        loadTodaySummary();
-      } catch(err){
-        chk.checked = true;
-        label.textContent = '✓ Logged — tap to undo';
-        flashToast("Couldn't remove that meal — check your connection", "error");
-      } finally {
-        chk.disabled = false;
-      }
+      };
+      if(chk._pendingSave){ chk._pendingSave.then(doDelete); } else { doDelete(); }
     }
   });
 });
