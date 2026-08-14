@@ -2121,13 +2121,13 @@
       <h3 class="plan-inline-title">Daily Eating Plan</h3>
 
       <div class="plan-selector">
-        <button class="plan-selector-btn active" data-plan="lowfat">Low-Fat<span class="plan-selector-sub">101g fat · active</span></button>
-        <button class="plan-selector-btn" data-plan="fullcream">Full Cream<span class="plan-selector-sub">138g fat</span></button>
+        <button class="plan-selector-btn" data-plan="lowfat">Low-Fat<span class="plan-selector-sub">101g fat</span></button>
+        <button class="plan-selector-btn active" data-plan="fullcream">Full Cream<span class="plan-selector-sub">138g fat · active</span></button>
       </div>
 
-      <div class="plan-fat-warning" id="planFatWarning" style="display:none">⚠️ Full Cream is the higher-fat backup — only switch to this if Coach specifically told you to, e.g. if you need more calories and aren't worried about bodyfat right now. Low-Fat is your default.</div>
+      <div class="plan-fat-warning" id="planFatWarning" style="display:none">⚠️ Low-Fat is the backup for if bodyfat climbs too fast — switch to this only if Coach or your own tracking says so. Full Cream is your default.</div>
 
-      <div id="planVariant-lowfat" class="plan-variant">
+      <div id="planVariant-lowfat" class="plan-variant" style="display:none">
         <div class="plan-target-bar">
           <div class="plan-target-card"><div class="plan-target-value">2,965</div><div class="plan-target-label">Kcal Target</div></div>
           <div class="plan-target-card"><div class="plan-target-value">198g</div><div class="plan-target-label">Protein Target</div></div>
@@ -2241,7 +2241,7 @@
         <div class="plan-estimate-note">⚠️ Low-fat milk's numbers are still an estimate (46 kcal / 3.6g protein / 4.8g carbs / 1.5g fat per 100ml) — send Coach the label photo once you buy it to lock these in exactly.</div>
       </div>
 
-      <div id="planVariant-fullcream" class="plan-variant" style="display:none">
+      <div id="planVariant-fullcream" class="plan-variant">
         <div class="plan-target-bar">
           <div class="plan-target-card"><div class="plan-target-value">3,017</div><div class="plan-target-label">Kcal Target</div></div>
           <div class="plan-target-card"><div class="plan-target-value">185g</div><div class="plan-target-label">Protein Target</div></div>
@@ -3610,7 +3610,7 @@ document.querySelectorAll('.plan-selector-btn').forEach(btn => {
     document.querySelectorAll('.plan-selector-btn').forEach(b => b.classList.toggle('active', b === btn));
     document.getElementById('planVariant-lowfat').style.display = plan === 'lowfat' ? 'block' : 'none';
     document.getElementById('planVariant-fullcream').style.display = plan === 'fullcream' ? 'block' : 'none';
-    document.getElementById('planFatWarning').style.display = plan === 'fullcream' ? 'block' : 'none';
+    document.getElementById('planFatWarning').style.display = plan === 'lowfat' ? 'block' : 'none';
   });
 });
 
