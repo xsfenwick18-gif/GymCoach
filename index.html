@@ -4042,10 +4042,16 @@ async function syncPlanLoggedMeals(){
   } catch(err){
     return;
   }
+
+  // Defensive matching — normalizes whitespace/case so a meal logged by an
+  // earlier version of the app (slightly different name/source casing)
+  // still gets recognized, instead of silently appearing "not logged".
+  const norm = (s) => String(s || '').trim().toLowerCase();
+
   checks.forEach(chk => {
     const mealName = chk.dataset.meal;
     const toggle = chk.closest('.plan-log-toggle');
-    const match = entries.find(e => e.source === 'Eating Plan' && e.foodName === mealName);
+    const match = entries.find(e => norm(e.foodName) === norm(mealName));
     if(match){
       chk.checked = true;
       chk.dataset.logId = match.id;
