@@ -2122,7 +2122,7 @@
 
       <div class="plan-selector">
         <button class="plan-selector-btn" data-plan="lowfat">Low-Fat<span class="plan-selector-sub">101g fat</span></button>
-        <button class="plan-selector-btn active" data-plan="fullcream">Full Cream<span class="plan-selector-sub">138g fat · active</span></button>
+        <button class="plan-selector-btn active" data-plan="fullcream">Full Cream<span class="plan-selector-sub">134g fat · active</span></button>
       </div>
 
       <div class="plan-fat-warning" id="planFatWarning" style="display:none">⚠️ Low-Fat is the backup for if bodyfat climbs too fast — switch to this only if Coach or your own tracking says so. Full Cream is your default.</div>
@@ -2243,9 +2243,9 @@
 
       <div id="planVariant-fullcream" class="plan-variant">
         <div class="plan-target-bar">
-          <div class="plan-target-card"><div class="plan-target-value">3,017</div><div class="plan-target-label">Kcal Target</div></div>
+          <div class="plan-target-card"><div class="plan-target-value">2,981</div><div class="plan-target-label">Kcal Target</div></div>
           <div class="plan-target-card"><div class="plan-target-value">185g</div><div class="plan-target-label">Protein Target</div></div>
-          <div class="plan-target-card"><div class="plan-target-value">138g</div><div class="plan-target-label">Fat Target</div></div>
+          <div class="plan-target-card"><div class="plan-target-value">134g</div><div class="plan-target-label">Fat Target</div></div>
         </div>
 
         <div class="plan-meal-card">
@@ -2315,18 +2315,17 @@
           </ul>
         </div>
 
-        <div class="plan-meal-card">
-          <div class="plan-meal-time-row"><span class="plan-meal-time">18:00</span><span class="plan-meal-macros">436 kcal · 25g protein</span></div>
-          <div class="plan-meal-name">Dinner</div>
+        <div class="plan-meal-card plan-variable">
+          <div class="plan-meal-time-row"><span class="plan-meal-time">18:00</span><span class="plan-meal-macros">~400 kcal · ~25g protein</span></div>
+          <div class="plan-meal-name">Dinner — Family Meal</div>
           <label class="plan-log-toggle">
-            <input type="checkbox" class="plan-log-check" data-meal="Dinner (Full Cream)" data-cal="436" data-protein="25" data-carbs="38" data-fat="19" data-fiber="3" data-sodium="430">
-            <span class="plan-log-checkbox"></span><span class="plan-log-label">Log this meal</span>
+            <input type="checkbox" class="plan-log-check" data-meal="Dinner (Full Cream)" data-cal="400" data-protein="25" data-carbs="41" data-fat="15" data-fiber="3" data-sodium="480">
+            <span class="plan-log-checkbox"></span><span class="plan-log-label">Log this meal (estimate)</span>
           </label>
           <ul class="plan-ingredient-list">
-            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>XL eggs</label><span class="plan-ing-amount">2 eggs</span></li>
-            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Brown bread</label><span class="plan-ing-amount">2 slices</span></li>
-            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Peanut butter</label><span class="plan-ing-amount">15g</span></li>
+            <li class="plan-ing-row"><label class="plan-ing-name"><input type="checkbox" class="plan-check"><span class="plan-checkbox"></span>Normal family portion</label><span class="plan-ing-amount">as served</span></li>
           </ul>
+          <div class="plan-prep-note"><strong>Eaten with family — no fixed ingredients.</strong> ~400 kcal is your usual estimate for this meal. This is the only estimated meal in the plan; everything else is exact.</div>
         </div>
 
         <div class="plan-meal-card">
@@ -2344,13 +2343,13 @@
         <div class="plan-summary-card">
           <div class="plan-summary-title">Daily Total — Full Cream</div>
           <div class="plan-summary-row"><span>Coffee + tea (auto-added)</span><span class="plan-summary-value">70 kcal</span></div>
-          <div class="plan-summary-row plan-highlight"><span>Your total</span><span class="plan-summary-value plan-good">3,017 kcal</span></div>
+          <div class="plan-summary-row plan-highlight"><span>Your total</span><span class="plan-summary-value plan-good">2,981 kcal</span></div>
           <div class="plan-summary-row"><span>Total protein</span><span class="plan-summary-value plan-good">185g</span></div>
-          <div class="plan-summary-row"><span>Total carbs</span><span class="plan-summary-value">245g</span></div>
-          <div class="plan-summary-row"><span>Total fat</span><span class="plan-summary-value">138g</span></div>
+          <div class="plan-summary-row"><span>Total carbs</span><span class="plan-summary-value">248g</span></div>
+          <div class="plan-summary-row"><span>Total fat</span><span class="plan-summary-value">134g</span></div>
         </div>
 
-        <div class="plan-grocery-note"><strong>Daily grocery list:</strong> 2.1L full cream milk, 5 XL eggs, 7 slices brown bread, 30g peanut butter, ½ can tuna, 15g mayo, 20g cheddar, 1 scoop whey.</div>
+        <div class="plan-grocery-note"><strong>Daily grocery list:</strong> 2.1L full cream milk, 3 XL eggs, 5 slices brown bread, 15g peanut butter, ½ can tuna, 15g mayo, 20g cheddar, 1 scoop whey — plus whatever the family's cooking for dinner.</div>
       </div>
 
       <div class="plan-footer-note">
@@ -3590,6 +3589,47 @@ const TARGETS = {
   sodium:   { max: 2300 } // upper limit, not a "hit this" target
 };
 
+// Instantly nudges the on-screen Today's Nutrition numbers by a meal's
+// macros, without waiting on a server round-trip. This is what makes
+// logging/unlogging a meal feel immediate — the real fix for the bug
+// where checking a meal didn't update the totals: loadTodaySummary()
+// was being called before the background save had actually finished
+// writing, so it fetched the OLD numbers and overwrote the display with
+// them. Now the display updates from this local math immediately, and
+// loadTodaySummary() (the authoritative server refresh) only runs after
+// the save is confirmed done.
+function applyOptimisticNutritionDelta(cal, protein, carbs, fat, fiber, sodium, sign){
+  const ids = ['sumCals','sumProtein','sumCarbs','sumFat','sumFiber','sumSodium'];
+  if(!ids.every(id => document.getElementById(id))) return; // Diet tab not rendered yet
+
+  const parseNum = (text) => parseFloat(text) || 0;
+  const newCals = Math.max(0, parseNum(document.getElementById('sumCals').textContent) + sign*cal);
+  const newProtein = Math.max(0, parseNum(document.getElementById('sumProtein').textContent) + sign*protein);
+  const newCarbs = Math.max(0, parseNum(document.getElementById('sumCarbs').textContent) + sign*carbs);
+  const newFat = Math.max(0, parseNum(document.getElementById('sumFat').textContent) + sign*fat);
+  const newFiber = Math.max(0, parseNum(document.getElementById('sumFiber').textContent) + sign*fiber);
+  const newSodium = Math.max(0, parseNum(document.getElementById('sumSodium').textContent) + sign*sodium);
+
+  document.getElementById('sumCals').textContent = Math.round(newCals);
+  document.getElementById('sumProtein').textContent = Math.round(newProtein) + 'g';
+  document.getElementById('sumCarbs').textContent = Math.round(newCarbs) + 'g';
+  document.getElementById('sumFat').textContent = Math.round(newFat) + 'g';
+  document.getElementById('sumFiber').textContent = Math.round(newFiber) + 'g';
+  document.getElementById('sumSodium').textContent = Math.round(newSodium) + 'mg';
+
+  const setBar = (barId, value, target) => {
+    const bar = document.getElementById(barId);
+    if(!bar) return;
+    bar.style.width = Math.min(100, (value / target.max) * 100) + '%';
+  };
+  setBar('barCals', newCals, TARGETS.calories);
+  setBar('barProtein', newProtein, TARGETS.protein);
+  setBar('barCarbs', newCarbs, TARGETS.carbs);
+  setBar('barFat', newFat, TARGETS.fat);
+  setBar('barFiber', newFiber, TARGETS.fiber);
+  setBar('barSodium', newSodium, TARGETS.sodium);
+}
+
 tabDiet.addEventListener('click', () => {
   tabDiet.classList.add('active');
   tabWorkout.classList.remove('active');
@@ -4022,14 +4062,20 @@ document.querySelectorAll('.plan-log-check').forEach(chk => {
   chk.addEventListener('change', () => {
     const toggle = chk.closest('.plan-log-toggle');
     const label = toggle.querySelector('.plan-log-label');
+    const cal = Number(chk.dataset.cal), protein = Number(chk.dataset.protein),
+          carbs = Number(chk.dataset.carbs), fat = Number(chk.dataset.fat),
+          fiber = Number(chk.dataset.fiber), sodium = Number(chk.dataset.sodium);
 
     if(chk.checked){
-      // OPTIMISTIC — instant UI + instant Today's Nutrition update. The
-      // actual Sheet write happens in the background; this is what makes
-      // tapping a meal feel instant instead of waiting on Apps Script.
+      // OPTIMISTIC — the numbers update instantly via local math (see
+      // applyOptimisticNutritionDelta). loadTodaySummary() (the real
+      // server refresh) only runs once the save below is confirmed
+      // written — calling it any earlier was the actual bug: it would
+      // fetch the sheet before the write landed and overwrite the
+      // instant update with stale numbers.
+      applyOptimisticNutritionDelta(cal, protein, carbs, fat, fiber, sodium, +1);
       label.textContent = '✓ Logged — tap to undo';
       flashToast(`${chk.dataset.meal} added to today's totals`);
-      loadTodaySummary();
 
       chk._pendingSave = fetch(API_URL, {
         method:'POST', headers:{'Content-Type':'text/plain'},
@@ -4042,31 +4088,34 @@ document.querySelectorAll('.plan-log-check').forEach(chk => {
       }).then(res => res.json()).then(data => {
         chk.dataset.logId = data.id || '';
         chk._pendingSave = null;
+        loadTodaySummary(); // now safe — the write has actually landed
       }).catch(() => {
+        applyOptimisticNutritionDelta(cal, protein, carbs, fat, fiber, sodium, -1); // roll back
         chk.checked = false;
         label.textContent = 'Log this meal';
         chk._pendingSave = null;
         flashToast("Couldn't save that meal — check your connection and try again", "error");
-        loadTodaySummary();
       });
     } else {
-      // Unchecking — instant UI, delete happens in the background. If a
-      // log for this meal is still mid-flight (rare, only if someone taps
-      // fast), wait for its real id to land before deleting it.
+      // Unchecking — same pattern: instant local rollback, real delete
+      // and server refresh happen in the background.
+      applyOptimisticNutritionDelta(cal, protein, carbs, fat, fiber, sodium, -1);
       label.textContent = 'Log this meal';
       flashToast(`${chk.dataset.meal} removed from today's totals`);
-      loadTodaySummary();
 
       const doDelete = () => {
         fetch(API_URL, {
           method:'POST', headers:{'Content-Type':'text/plain'},
           body: JSON.stringify({ type:'deletefood', id: chk.dataset.logId })
-        }).then(() => { delete chk.dataset.logId; })
+        }).then(() => {
+          delete chk.dataset.logId;
+          loadTodaySummary(); // now safe — the delete has actually landed
+        })
         .catch(() => {
+          applyOptimisticNutritionDelta(cal, protein, carbs, fat, fiber, sodium, +1); // roll back
           chk.checked = true;
           label.textContent = '✓ Logged — tap to undo';
           flashToast("Couldn't remove that meal — check your connection", "error");
-          loadTodaySummary();
         });
       };
       if(chk._pendingSave){ chk._pendingSave.then(doDelete); } else { doDelete(); }
