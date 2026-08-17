@@ -3225,7 +3225,7 @@ async function logSet(ex, setNum, row){
 
   // Background save — UI has already moved on by the time this resolves.
   fetch(API_URL, {
-    method: 'POST',
+    method: 'POST', keepalive: true,
     headers: {'Content-Type':'text/plain'},
     body: JSON.stringify({
       date: todayDate(),
@@ -3277,7 +3277,7 @@ async function updateSet(ex, setNum, row){
 
   try{
     await fetch(API_URL, {
-      method: 'POST',
+      method: 'POST', keepalive: true,
       headers: {'Content-Type':'text/plain'},
       body: JSON.stringify({
         type: 'updateset',
@@ -3455,7 +3455,7 @@ document.getElementById('finishBtn').addEventListener('click', async (e) => {
 
   await withButtonFeedback(btn, async () => {
     await fetch(API_URL, {
-      method: 'POST',
+      method: 'POST', keepalive: true,
       headers: {'Content-Type':'text/plain'},
       body: JSON.stringify({
         date: todayDate(),
@@ -3766,7 +3766,7 @@ async function loadTodaySummary(){
       const proceed = await showConfirm("Remove entry?", `Delete "${e.foodName}" from today's log? This can't be undone.`);
       if(!proceed) return;
       await fetch(API_URL, {
-        method:'POST', headers:{'Content-Type':'text/plain'},
+        method:'POST', keepalive: true, headers:{'Content-Type':'text/plain'},
         body: JSON.stringify({ type:'deletefood', id: e.id })
       });
       flashToast("Entry removed");
@@ -3890,7 +3890,7 @@ document.getElementById('saveMetricsBtn').addEventListener('click', async (e) =>
 
   const ok = await withButtonFeedback(e.currentTarget, async () => {
     await fetch(API_URL, {
-      method: 'POST',
+      method: 'POST', keepalive: true,
       headers: {'Content-Type':'text/plain'},
       body: JSON.stringify({
         type: 'bodymetric',
@@ -4084,7 +4084,7 @@ document.querySelectorAll('.plan-log-check').forEach(chk => {
       flashToast(`${chk.dataset.meal} added to today's totals`);
 
       chk._pendingSave = fetch(API_URL, {
-        method:'POST', headers:{'Content-Type':'text/plain'},
+        method:'POST', keepalive: true, headers:{'Content-Type':'text/plain'},
         body: JSON.stringify({
           type:'food', date: todayDate(), meal:'', foodName: chk.dataset.meal, grams:'',
           calories: chk.dataset.cal, protein: chk.dataset.protein, carbs: chk.dataset.carbs,
@@ -4111,7 +4111,7 @@ document.querySelectorAll('.plan-log-check').forEach(chk => {
 
       const doDelete = () => {
         fetch(API_URL, {
-          method:'POST', headers:{'Content-Type':'text/plain'},
+          method:'POST', keepalive: true, headers:{'Content-Type':'text/plain'},
           body: JSON.stringify({ type:'deletefood', id: chk.dataset.logId })
         }).then(() => {
           delete chk.dataset.logId;
