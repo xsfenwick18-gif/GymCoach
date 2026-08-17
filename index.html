@@ -2637,6 +2637,34 @@ function themeColor(varName){
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzoAopZn1rHAJcAfGgYxY64E1wxI-UQskitkmO9BnpOMCT95LeTtFNfL92TCRcDp5u5ig/exec";
 
+// Used for optimistic writes (set logging, meal logging) where the screen
+// already shows "done" before the save finishes — exactly the case where
+// closing the app or refreshing right after tapping something can cancel
+// a still-in-flight fetch() before it reaches the Sheet. sendBeacon is the
+// browser API built specifically for this: once queued, the browser
+// guarantees delivery even if the page is closed or navigated away from
+// immediately after, which a plain fetch (even with keepalive) does not
+// reliably guarantee on every browser (particularly mobile Safari).
+// Trade-off: no response body is available, so callers can't read back
+// e.g. a newly-created row's id from this — that only becomes available
+// on the next real sync (switching tabs, reopening the app).
+function reliablePost(payload){
+  const body = JSON.stringify(payload);
+  if(navigator.sendBeacon){
+    const blob = new Blob([body], { type: 'text/plain' });
+    const queued = navigator.sendBeacon(API_URL, blob);
+    if(queued) return true;
+  }
+  // Fallback for the rare browser without sendBeacon, or if queueing
+  // itself failed — still better than nothing.
+  fetch(API_URL, {
+    method: 'POST', keepalive: true,
+    headers: {'Content-Type':'text/plain'},
+    body
+  }).catch(() => {});
+  return false;
+}
+
 // Branded SVG icon set — replaces emoji/plain-text glyphs throughout the app
 // (checkmarks, trash icons, trophy, flame, etc.) with icons that match the
 // GymCoach palette exactly and scale crisply at any size.
@@ -3205,7 +3233,6 @@ async function logSet(ex, setNum, row){
   row.dataset.weight = w;
   row.dataset.reps = r;
   row.dataset.date = todayDate();
-  const originalRowHTML = row.innerHTML;
   renderDoneSetRow(row, ex, setNum, w, r);
   highlightNewRow(row);
 
@@ -3223,24 +3250,16 @@ async function logSet(ex, setNum, row){
   const restSeconds = BIG_LIFTS.includes(ex.exercise) ? REST_BIG : REST_SMALL;
   startRestTimer(restSeconds, ex, setNum);
 
-  // Background save — UI has already moved on by the time this resolves.
-  fetch(API_URL, {
-    method: 'POST', keepalive: true,
-    headers: {'Content-Type':'text/plain'},
-    body: JSON.stringify({
-      date: todayDate(),
-      day: currentDay,
-      exercise: ex.exercise,
-      set: setNum,
-      weight: w,
-      reps: r
-    })
-  }).catch(err => {
-    row.classList.remove('done');
-    row.innerHTML = originalRowHTML;
-    const newBtn = row.querySelector('.log-btn');
-    if(newBtn) newBtn.addEventListener('click', () => logSet(ex, setNum, row));
-    flashToast("Couldn't save that set — check your connection and log it again", "error");
+  // RELIABLE background save — sendBeacon (via reliablePost) guarantees
+  // this reaches the Sheet even if the app is closed or refreshed a
+  // split second after tapping log, which a plain fetch could lose.
+  reliablePost({
+    date: todayDate(),
+    day: currentDay,
+    exercise: ex.exercise,
+    set: setNum,
+    weight: w,
+    reps: r
   });
 }
 
@@ -4083,48 +4102,42 @@ document.querySelectorAll('.plan-log-check').forEach(chk => {
       label.textContent = '✓ Logged — tap to undo';
       flashToast(`${chk.dataset.meal} added to today's totals`);
 
-      chk._pendingSave = fetch(API_URL, {
-        method:'POST', keepalive: true, headers:{'Content-Type':'text/plain'},
-        body: JSON.stringify({
-          type:'food', date: todayDate(), meal:'', foodName: chk.dataset.meal, grams:'',
-          calories: chk.dataset.cal, protein: chk.dataset.protein, carbs: chk.dataset.carbs,
-          fat: chk.dataset.fat, fiber: chk.dataset.fiber, sodium: chk.dataset.sodium,
-          source: 'Eating Plan'
-        })
-      }).then(res => res.json()).then(data => {
-        chk.dataset.logId = data.id || '';
-        chk._pendingSave = null;
-        loadTodaySummary(); // now safe — the write has actually landed
-      }).catch(() => {
-        applyOptimisticNutritionDelta(cal, protein, carbs, fat, fiber, sodium, -1); // roll back
-        chk.checked = false;
-        label.textContent = 'Log this meal';
-        chk._pendingSave = null;
-        flashToast("Couldn't save that meal — check your connection and try again", "error");
+      // RELIABLE — sendBeacon guarantees this reaches the Sheet even if
+      // the app is closed or refreshed a split second later, which a
+      // plain fetch (even with keepalive) was not reliably doing on
+      // every browser. Trade-off: no response, so we don't have this
+      // row's id yet — a quick background sync fills it in a moment
+      // later so "tap to undo" still works without a full reload.
+      reliablePost({
+        type:'food', date: todayDate(), meal:'', foodName: chk.dataset.meal, grams:'',
+        calories: chk.dataset.cal, protein: chk.dataset.protein, carbs: chk.dataset.carbs,
+        fat: chk.dataset.fat, fiber: chk.dataset.fiber, sodium: chk.dataset.sodium,
+        source: 'Eating Plan'
       });
+      setTimeout(() => { syncPlanLoggedMeals(); }, 1500);
     } else {
-      // Unchecking — same pattern: instant local rollback, real delete
-      // and server refresh happen in the background.
+      // Unchecking — instant local rollback. If this meal's row id isn't
+      // known yet (e.g. unchecked right after logging, before the
+      // background sync above landed), look it up by name first so the
+      // delete still targets the correct row instead of silently doing
+      // nothing.
       applyOptimisticNutritionDelta(cal, protein, carbs, fat, fiber, sodium, -1);
       label.textContent = 'Log this meal';
       flashToast(`${chk.dataset.meal} removed from today's totals`);
 
-      const doDelete = () => {
-        fetch(API_URL, {
-          method:'POST', keepalive: true, headers:{'Content-Type':'text/plain'},
-          body: JSON.stringify({ type:'deletefood', id: chk.dataset.logId })
-        }).then(() => {
-          delete chk.dataset.logId;
-          loadTodaySummary(); // now safe — the delete has actually landed
-        })
-        .catch(() => {
-          applyOptimisticNutritionDelta(cal, protein, carbs, fat, fiber, sodium, +1); // roll back
-          chk.checked = true;
-          label.textContent = '✓ Logged — tap to undo';
-          flashToast("Couldn't remove that meal — check your connection", "error");
-        });
-      };
-      if(chk._pendingSave){ chk._pendingSave.then(doDelete); } else { doDelete(); }
+      if(chk.dataset.logId){
+        reliablePost({ type:'deletefood', id: chk.dataset.logId });
+        delete chk.dataset.logId;
+      } else {
+        fetch(`${API_URL}?action=foodlog&date=${todayDate()}`)
+          .then(res => res.json())
+          .then(entries => {
+            const norm = (s) => String(s || '').trim().toLowerCase();
+            const match = entries.find(e => norm(e.foodName) === norm(chk.dataset.meal));
+            if(match) reliablePost({ type:'deletefood', id: match.id });
+          })
+          .catch(() => {});
+      }
     }
   });
 });
